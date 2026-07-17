@@ -1707,14 +1707,19 @@
         <p><b class="text-slate-300">보유 기간:</b> 회원 탈퇴 시까지 (법령에 따라 일부 보존)</p>
       </div>
       <label class="flex items-start gap-2 text-[11px] text-slate-300 cursor-pointer">
-        <input type="checkbox" id="signup-consent" class="w-4 h-4 mt-0.5 accent-sky-500 shrink-0">
+        <input type="checkbox" id="signup-consent" class="w-4 h-4 mt-0.5 accent-sky-500 shrink-0" onchange="syncGsiBlock()">
         <span><b class="text-sky-400">[필수]</b> 개인정보 수집 및 이용에 동의합니다.</span>
       </label>
 
       <!-- 소셜 간편가입 — 구글만 실제 연동 (카카오/네이버는 사업자 등록 + 비즈앱 심사 필요해서 준비중) -->
       <div class="space-y-2 text-sm font-bold">
         <!-- 구글이 직접 그려주는 진짜 로그인 버튼 -->
-        <div id="gsi-button" style="display:flex;justify-content:center;min-height:44px;"></div>
+        <!-- 동의 전에는 투명한 막을 덮어서 구글 팝업 자체가 안 뜨게 함 (끝까지 갔다가 퇴짜맞는 일 방지) -->
+        <div id="gsi-wrap" style="position:relative;">
+          <div id="gsi-button" style="display:flex;justify-content:center;min-height:44px;"></div>
+          <div id="gsi-block" onclick="showToast('먼저 [필수] 개인정보 수집 및 이용에 동의해주세요.')"
+               style="position:absolute;inset:0;cursor:not-allowed;border-radius:9999px;background:rgba(11,15,25,0.55);"></div>
+        </div>
         <!-- 구글 스크립트가 안 뜨는 환경(file:// 로 연 경우, 인터넷 차단 등) 안내 -->
         <p id="gsi-fallback" class="hidden text-[10px] text-center leading-relaxed" style="color:#fbbf24;background:rgba(120,53,15,0.25);border:1px solid #78350f;border-radius:8px;padding:8px;">
           구글 로그인은 <b>인터넷 주소로 접속했을 때만</b> 작동합니다.<br>아래 이메일 가입을 이용해주세요.
@@ -5454,14 +5459,23 @@
       if (consent) consent.checked = false;
     }
 
+    // 동의 체크 여부에 따라 구글 버튼 위의 막을 켜고 끔
+    function syncGsiBlock() {
+      const block = document.getElementById('gsi-block');
+      const consent = document.getElementById('signup-consent');
+      if (!block) return;
+      block.style.display = (consent && consent.checked) ? 'none' : 'block';
+    }
+
     // 구글 로그인 버튼 그리기 (스크립트가 로드된 뒤에만 가능)
     function initGoogleSignIn() {
       const box = document.getElementById('gsi-button');
       const fallback = document.getElementById('gsi-fallback');
       if (!box) return;
+      syncGsiBlock();
       // file:// 로 열었거나 인터넷이 막히면 구글 스크립트가 안 올라옴 → 안내로 대체
       if (!(window.google && google.accounts && google.accounts.id)) {
-        box.style.display = 'none';
+        document.getElementById('gsi-wrap').style.display = 'none';
         if (fallback) fallback.classList.remove('hidden');
         return;
       }
@@ -5480,7 +5494,7 @@
         box.dataset.rendered = '1';
         if (fallback) fallback.classList.add('hidden');
       } catch (e) {
-        box.style.display = 'none';
+        document.getElementById('gsi-wrap').style.display = 'none';
         if (fallback) fallback.classList.remove('hidden');
         addLog("AUTH", "구글 로그인 초기화 실패: " + e.message);
       }
