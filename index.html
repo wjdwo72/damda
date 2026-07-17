@@ -198,6 +198,12 @@
           <span>로그인 / 회원가입</span>
         </button>
 
+        <!-- ⚙️ 관리자 (사장님 계정으로 로그인했을 때만 보임 — 손님에겐 안 보임) -->
+        <button onclick="gotoAdmin()" id="admin-entry-btn" class="hidden" title="백오피스 대시보드"
+                style="align-items:center;gap:4px;font-size:11px;font-weight:800;color:#fbbf24;background:rgba(120,53,15,0.35);border:1px solid #78350f;border-radius:9999px;padding:6px 11px;cursor:pointer;white-space:nowrap;">
+          ⚙️ 관리자
+        </button>
+
         <!-- 로그인 완료 상태 인디케이터 (로그인 후 표시) -->
         <button onclick="navigate('mypage')" id="mypage-link" class="hidden items-center gap-1 text-xs font-bold text-slate-300 hover:text-sky-400 transition px-2 py-1.5">
           👤 마이페이지
@@ -1027,14 +1033,15 @@
         <div style="border:1px solid #1e293b;border-radius:14px;padding:16px;background:#0f172a;">
           <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
             <div style="flex:1;min-width:220px;">
-              <p style="font-size:13px;font-weight:800;color:#ffffff;">🔥 서버에서 불러오기</p>
+              <p style="font-size:13px;font-weight:800;color:#ffffff;">🔥 서버 연결 상태</p>
               <p style="font-size:11px;color:#94a3b8;margin-top:4px;line-height:1.7;">
-                손님이 <b style="color:#e2e8f0;">폰이든 PC든 어디서 가입·주문해도</b> 서버에 쌓입니다.
-                이 버튼을 누르면 그걸 관리자 화면으로 끌어옵니다.
+                손님이 <b style="color:#e2e8f0;">폰이든 PC든 어디서 가입·주문해도</b> 서버에 쌓이고,
+                <b style="color:#34d399;">관리자 화면을 열면 자동으로 불러옵니다.</b>
+                방금 들어온 주문을 바로 확인하려면 새로고침 버튼을 누르세요.
                 <b style="color:#fbbf24;">사장님 구글 계정으로 로그인했을 때만</b> 됩니다.
               </p>
             </div>
-            <button onclick="fbSyncAdmin()" style="padding:11px 18px;border-radius:9px;border:none;background:#f97316;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">🔥 불러오기</button>
+            <button onclick="fbSyncAdmin()" style="padding:11px 18px;border-radius:9px;border:none;background:#f97316;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;">🔄 새로고침</button>
           </div>
           <p id="fb-sync-status" style="font-size:11px;color:#34d399;margin-top:10px;line-height:1.7;"></p>
           <p style="font-size:11px;color:#94a3b8;background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.7;">
@@ -3227,12 +3234,19 @@
     }
 
     // --- 관리자 로그인 게이트 처리 ---
+    let lastFbSync = 0;
     function showAdminGateOrDashboard() {
       const gate = document.getElementById('admin-login-gate');
       const body = document.getElementById('admin-dashboard-body');
       if (isAdminAuthed) {
         gate.classList.add('hidden');
         body.classList.remove('hidden');
+        // 🔥 관리자 화면이 열리면 서버 내용을 자동으로 끌어옴 (버튼은 수동 새로고침용으로 남겨둠)
+        // 30초 안에 또 열면 다시 안 읽음 — 무료 한도(하루 5만 읽기)를 아끼기 위함
+        if (typeof fbSyncAdmin === 'function' && Date.now() - lastFbSync > 30000) {
+          lastFbSync = Date.now();
+          setTimeout(() => fbSyncAdmin(true), 400);   // true = 조용히 (토스트 안 띄움)
+        }
       } else {
         gate.classList.remove('hidden');
         body.classList.add('hidden');
@@ -4692,14 +4706,15 @@
     }
 
     // 사장님이 구글 로그인하면 서버에 쌓인 회원·주문·문의를 관리자 화면으로 끌어옴
-    async function fbSyncAdmin() {
-      if (!window.FB) { showToast('파이어베이스에 연결되지 않았습니다.'); return; }
+    // silent=true 면 자동 실행(관리자 화면 열릴 때) → 토스트로 방해하지 않음
+    async function fbSyncAdmin(silent) {
+      if (!window.FB) { if (!silent) showToast('파이어베이스에 연결되지 않았습니다.'); return; }
       const el = document.getElementById('fb-sync-status');
       if (el) el.innerText = '⏳ 서버에서 불러오는 중...';
       const [m, o, i] = await Promise.all([fbLoadAll('members'), fbLoadAll('orders'), fbLoadAll('inquiries')]);
       if (m === null && o === null && i === null) {
         if (el) el.innerHTML = '❌ 서버 읽기 실패 — <b>사장님 구글 계정으로 로그인</b>했는지 확인해주세요.';
-        showToast('서버 읽기 실패 — 사장님 구글 계정으로 로그인해야 합니다.');
+        if (!silent) showToast('서버 읽기 실패 — 사장님 구글 계정으로 로그인해야 합니다.');
         return;
       }
       if (Array.isArray(m)) { members = m; renderMembers(); }
@@ -4707,7 +4722,7 @@
       if (Array.isArray(i)) { bulkInquiries = i; renderAdminInquiries(); }
       const msg = `✅ 서버에서 불러왔습니다 — 회원 ${(m||[]).length}명 · 주문 ${(o||[]).length}건 · 문의 ${(i||[]).length}건 (${new Date().toLocaleTimeString('ko-KR')})`;
       if (el) el.innerText = msg;
-      showToast(msg);
+      if (!silent) showToast(msg);
     }
 
     function deleteOrder(id) {
@@ -5605,11 +5620,28 @@
       syncGsiBlock();
 
       if (isOwnerEmail(email)) {           // 🔐 사장님 → 관리자로 진입
+        // 로그인 상태로 저장해둬야 새로고침해도 헤더의 ⚙️관리자 버튼이 남고,
+        // 홈에 나갔다가 다시 관리자로 들어올 수 있음. (회원으로는 등록하지 않음)
+        currentUser = { name, contact: email, channel: 'Google' };
+        idbSet('current_user', currentUser);
+        applyLoginState();
         closeLoginModal();
         adminLoginFromSignupForm(name);
         return;
       }
       completeLogin(name, email, 'Google');   // 손님 → 일반 회원
+    }
+
+    // 헤더의 ⚙️관리자 버튼 → 백오피스로. 사장님 계정으로 로그인한 상태에서만 동작.
+    function gotoAdmin() {
+      if (currentUser && isOwnerEmail(currentUser.contact)) {
+        isAdminAuthed = true;
+        navigate('admin');
+        showAdminGateOrDashboard();
+        return;
+      }
+      showToast('사장님 구글 계정으로 로그인해주세요.');
+      openLoginModal();
     }
 
     // 동의 체크 여부에 따라 구글 버튼을 흐리게/선명하게
@@ -5690,6 +5722,13 @@
         if (loginBtn) loginBtn.classList.remove('hidden');
         if (indicator) { indicator.classList.add('hidden'); indicator.classList.remove('flex'); }
         if (myLink) { myLink.classList.add('hidden'); myLink.classList.remove('flex'); }
+      }
+      // ⚙️관리자 버튼은 사장님 계정으로 로그인했을 때만 (손님에겐 존재 자체가 안 보임)
+      const adminBtn = document.getElementById('admin-entry-btn');
+      if (adminBtn) {
+        const isOwner = !!(currentUser && isOwnerEmail(currentUser.contact));
+        adminBtn.classList.toggle('hidden', !isOwner);
+        adminBtn.style.display = isOwner ? 'inline-flex' : '';
       }
     }
 
