@@ -2060,6 +2060,25 @@
     </div>
   </div>
 
+  <!-- MODAL: 무료 체험 종료 → 구매 유도 -->
+  <div id="trial-end-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border max-w-sm w-full rounded-2xl p-6 relative space-y-4 animate-in fade-in zoom-in-95 duration-200" style="border-color:rgba(99,102,241,.45);">
+      <button onclick="closeTrialEndModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl leading-none">✕</button>
+      <div class="text-center space-y-1">
+        <div style="font-size:38px;line-height:1;">🎁</div>
+        <h3 class="text-lg font-black text-white">무료 체험이 끝났습니다</h3>
+        <p id="trial-end-desc" class="text-xs text-slate-400"></p>
+      </div>
+      <div class="rounded-xl p-4 text-center" style="background:rgba(79,70,229,.1);border:1px solid rgba(99,102,241,.3);">
+        <p id="trial-end-name" class="font-bold text-white text-sm"></p>
+        <p id="trial-end-cond" class="text-[11px] mt-1" style="color:#a5b4fc;"></p>
+        <p id="trial-end-price" class="text-2xl font-black text-white mt-2"></p>
+      </div>
+      <button onclick="buyFromTrialModal()" class="w-full py-3.5 rounded-xl font-black text-sm" style="background:#4f46e5;color:#fff;border:none;cursor:pointer;">🛒 지금 구매하기</button>
+      <button onclick="closeTrialEndModal()" class="w-full py-2 rounded-lg font-bold text-xs" style="background:transparent;color:#64748b;border:none;cursor:pointer;">나중에 할게요</button>
+    </div>
+  </div>
+
   <!-- MODAL: 맞춤/특수 제품 문의 (홈페이지에 없는 제품 — 이미지 첨부) -->
   <div id="custom-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 max-w-md w-full rounded-2xl p-6 relative space-y-4 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
@@ -2676,9 +2695,15 @@
         if (Array.isArray(acs)) { accessCodes = acs; if (typeof renderAccessCodes === 'function') renderAccessCodes(); }
         const sbs = await idbGet('subscriptions');
         if (Array.isArray(sbs)) { subscriptions = sbs; }
-        // 무료체험 사용 횟수 (이 브라우저 기준)
+        // 무료체험 사용 횟수 — 브라우저 기록을 먼저 읽고, 로그인이 복구되면 서버 기록으로 덮어씀
         const pu = await idbGet('program_uses');
         if (pu && typeof pu === 'object') programUses = pu;
+        // 새로고침 후 구글 로그인이 복구되는 시점에 서버의 체험 횟수를 가져옴
+        if (window.FB && FB.onAuthStateChanged) {
+          FB.onAuthStateChanged(FB.auth, (u) => {
+            if (u && !u.isAnonymous) loadTrialUsesFromServer();
+          });
+        }
         // 5.55b) 배너 광고
         let bns = await idbGet('banners');
         if (!Array.isArray(bns) && Array.isArray(SEED.banners)) bns = SEED.banners;   // 방문자 → 시드
@@ -4451,7 +4476,32 @@
     // --- 프로그램 이용 방식 (유료 / 무료체험 N회 / 완전무료) ---
     // 체험 횟수는 방문자 브라우저(IndexedDB)에 기록. 브라우저를 지우면 초기화되는 "맛보기 제한"임.
     let programUses = {};   // { [productId]: 사용한 횟수 }
-    function saveProgramUses() { idbSet('program_uses', programUses); }
+    function saveProgramUses() { idbSet('program_uses', programUses); saveTrialUsesToServer(); }
+
+    // 회원 계정(구글 uid)에 체험 횟수를 저장 — 시크릿창/다른 브라우저로 초기화하는 우회를 막음.
+    // Firestore 규칙 필요:  match /trials/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; }
+    async function saveTrialUsesToServer() {
+      if (!window.FB || !FB.auth || !FB.auth.currentUser) return;
+      try {
+        await FB.setDoc(FB.doc(FB.db, 'trials', FB.auth.currentUser.uid), programUses);
+      } catch (e) { addLog("DB", `체험횟수 저장 실패: ${e.code || e.message}`); }
+    }
+    // 로그인 직후 서버 기록을 가져와 합침. 서버 값이 더 크면 그걸 따름(우회 방지).
+    async function loadTrialUsesFromServer() {
+      if (!window.FB || !FB.auth || !FB.auth.currentUser) return;
+      try {
+        const snap = await FB.getDoc(FB.doc(FB.db, 'trials', FB.auth.currentUser.uid));
+        if (!snap.exists()) return;
+        const d = snap.data() || {};
+        let changed = false;
+        Object.keys(d).forEach(k => {
+          const v = parseInt(d[k], 10) || 0;
+          if (v > (programUses[k] || 0)) { programUses[k] = v; changed = true; }
+        });
+        if (changed) idbSet('program_uses', programUses);
+        if (typeof renderDetail === 'function' && selectedProduct) { /* 화면 갱신은 다음 진입 시 */ }
+      } catch (e) { addLog("DB", `체험횟수 읽기 실패: ${e.code || e.message}`); }
+    }
     function accessModeOf(p) { return (p && p.accessMode) || 'paid'; }
     function trialLimitOf(p) { return Math.max(0, parseInt(p && p.trialUses, 10) || 0); }
     function paidLimitOf(p) { return Math.max(0, parseInt(p && p.paidUses, 10) || 0); }
@@ -4497,17 +4547,26 @@
       } else if (mode === 'free') {
         // 완전 무료 — 누구나 사용
       } else if (mode === 'trial') {
+        // 🔐 무료 체험도 로그인 필수 — 안 그러면 시크릿창으로 무한 체험이 됨
+        if (!currentUser) {
+          showToast('🎁 무료 체험은 로그인 후 이용하실 수 있습니다. (횟수를 계정에 저장합니다)');
+          openLoginModal();
+          return;
+        }
         const limit = trialLimitOf(p);
         const used = programUsedCount(productId);
         if (limit && used >= limit) {
-          showToast(`무료 체험 ${limit}회를 모두 사용하셨습니다.\n계속 쓰시려면 구독을 신청해주세요.`);
           selectedProduct = p; navigate('detail');
+          openTrialEndModal(p);              // 💳 구매 유도 팝업
           return;
         }
         if (limit) {                                  // 횟수 제한이 있을 때만 차감
           programUses[String(productId)] = used + 1;
           saveProgramUses();
-          showToast(`🎁 무료 체험 ${used + 1}/${limit}회째 사용중입니다.`);
+          const left = limit - (used + 1);
+          showToast(left === 0
+            ? `🎁 무료 체험 마지막 ${limit}/${limit}회입니다. 다음부터는 구매가 필요합니다.`
+            : `🎁 무료 체험 ${used + 1}/${limit}회째 · ${left}회 남았습니다.`);
         }
       } else {
         showToast('사용 권한이 없습니다. 입장코드를 등록해주세요.');
@@ -4550,6 +4609,37 @@
       document.getElementById('program-expire').innerText = stateText;
       document.getElementById('program-frame').src = src;
       navigate('program');
+    }
+
+    // --- 무료 체험 종료 → 구매 유도 팝업 ---
+    let trialModalProductId = null;
+    function openTrialEndModal(p) {
+      if (!p) return;
+      trialModalProductId = p.id;
+      const n = paidLimitOf(p);
+      const dv = (p.validDays === undefined || p.validDays === null) ? 30 : p.validDays;
+      const cond = isPassCount(p.type) ? (n ? `${n}회 이용권` : '횟수 무제한 이용권')
+                 : isPassDays(p.type)  ? (dv ? `${dv}일 이용권` : '기간 무제한 이용권')
+                 : '월 정기구독';
+      document.getElementById('trial-end-desc').innerText =
+        `${trialLimitOf(p)}회 체험을 모두 사용하셨습니다. 계속 쓰시려면 ${isPass(p.type) ? '이용권을 구매' : '구독을 신청'}해주세요.`;
+      document.getElementById('trial-end-name').innerText = p.name;
+      document.getElementById('trial-end-cond').innerText = cond;
+      document.getElementById('trial-end-price').innerText = `${p.price.toLocaleString()}원`;
+      document.getElementById('trial-end-modal').classList.remove('hidden');
+    }
+    function closeTrialEndModal() {
+      document.getElementById('trial-end-modal').classList.add('hidden');
+    }
+    // 팝업의 [지금 구매하기] → 장바구니에 담고 장바구니로 이동
+    function buyFromTrialModal() {
+      const p = products.find(x => x.id === trialModalProductId);
+      closeTrialEndModal();
+      if (!p) return;
+      selectedProduct = p;
+      navigate('detail');
+      addCurrentToCart();                 // 로그인 안 돼 있으면 여기서 로그인 유도됨
+      if (currentUser) navigate('cart');
     }
 
     // 이용 방식 라디오 → 고른 방식 + 상품 유형에 맞는 칸만 보이기
@@ -6771,6 +6861,8 @@
       currentUser = { name, contact, channel };
       idbSet('current_user', currentUser);
       applyLoginState();
+      // 이 계정에 저장된 무료체험 사용 횟수를 서버에서 가져옴 (다른 브라우저로 초기화 방지)
+      if (typeof loadTrialUsesFromServer === 'function') loadTrialUsesFromServer();
 
       closeLoginModal();
       addLog("AUTH", `${channel} 간편가입/로그인: ${name} (${contact})`);
