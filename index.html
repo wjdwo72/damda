@@ -4432,7 +4432,7 @@
     function isDigital(t) { return t === 'subscription' || t === 'pass'; }
     function isPass(t) { return t === 'pass'; }
     function typeBadge(t) { return t === 'pass' ? '🎫 이용권' : (t === 'subscription' ? '💻 구독' : ''); }
-    function priceLabelOf(t) { return t === 'pass' ? '이용권 가격' : (t === 'subscription' ? '월 구독료' : '공급단가'); }
+    function priceLabelOf(t) { return t === 'pass' ? '횟수 이용료' : (t === 'subscription' ? '월 이용료' : '공급단가'); }
 
     // --- 프로그램 이용 방식 (유료 / 무료체험 N회 / 완전무료) ---
     // 체험 횟수는 방문자 브라우저(IndexedDB)에 기록. 브라우저를 지우면 초기화되는 "맛보기 제한"임.
@@ -5136,7 +5136,7 @@
         `📞 연락처: ${phone}\n` +
         `📦 배송방식: ${newOrder.delivery}\n` +
         `💳 결제수단: ${payMethod}${payMethod === '무통장입금' ? ' (입금 대기)' : ''}\n` +
-        (allSub ? `🔁 구독 주기: 1개월 (매월 갱신)\n⚠️ 입금 확인 후 위 연락처로 프로그램 접속 정보를 보내주세요.\n⚠️ 다음 달 구독료는 아직 자동청구가 안 되므로 재입금 안내가 필요합니다.\n` : `📍 배송지: ${address}\n`) +
+        (allSub ? `🔁 이용 조건: ${cart.some(i => isPass(i.product.type)) ? '이용권 (횟수제)' : '1개월 (매월 갱신)'}\n⚠️ 입금 확인 후 위 연락처로 프로그램 접속 정보를 보내주세요.\n⚠️ 다음 이용료는 아직 자동청구가 안 되므로 재입금 안내가 필요합니다.\n` : `📍 배송지: ${address}\n`) +
         (note ? `📝 요청사항: ${note}\n` : ``) +
         (taxInvoice ? `🧾 세금계산서 발행 요청${pendingTaxFileName ? ` (사업자등록증 첨부: ${pendingTaxFileName})` : ''}\n` : ``) +
         (cashReceipt ? `🧾 현금영수증 요청 (번호: ${cashReceiptNum || '미입력'})\n` : ``) +
@@ -5391,7 +5391,9 @@
       if (moqInput) moqInput.required = !isSub;
       if (progWrap) progWrap.classList.toggle('hidden', !isSub);
       if (shipWrap) shipWrap.classList.toggle('hidden', isSub); // 구독은 배송 없음
-      if (priceLabel) priceLabel.textContent = isSub ? '월 구독료 (원)' : '공급 단가 (원)';
+      if (priceLabel) priceLabel.textContent = isSub
+        ? (document.getElementById('admin-type').value === 'pass' ? '횟수 이용료 (원)' : '월 이용료 (원)')
+        : '공급 단가 (원)';
       if (nameLabel) nameLabel.textContent = isSub ? '프로그램 / 서비스명' : '완충재 완제품명';
     }
 
