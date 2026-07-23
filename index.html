@@ -681,7 +681,13 @@
               <span id="detail-total-price" class="text-3xl font-black text-sky-400">120,000원</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- 품절 안내 (품절 상품일 때만) -->
+            <div id="detail-soldout-box" class="hidden rounded-xl p-4 text-center" style="background:rgba(2,6,23,.7);border:1px solid rgba(148,163,184,.35);">
+              <p class="font-black text-white text-base" style="letter-spacing:2px;">SOLD OUT</p>
+              <p class="text-[11px] text-slate-400 mt-1">현재 품절된 상품입니다. 재입고되면 다시 판매됩니다.</p>
+            </div>
+
+            <div id="detail-buy-buttons" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button onclick="addCurrentToCart()" class="py-4 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold rounded-xl transition flex items-center justify-center gap-2">
                 <svg
   class="lucide w-5 h-5 lucide-shopping-cart"
@@ -1518,6 +1524,11 @@
                     <p class="text-[10px] text-slate-500 mb-1">미리보기</p>
                     <div id="admin-badge-preview" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
                   </div>
+
+                  <label class="flex items-center gap-2 text-xs font-bold cursor-pointer" style="padding:9px;background:rgba(225,29,72,.08);border:1px solid rgba(225,29,72,.25);border-radius:8px;color:#fda4af;">
+                    <input type="checkbox" id="admin-soldout" class="w-4 h-4 accent-rose-500">
+                    🚫 SOLD OUT (품절) — 체크하면 <b>판매가 중지</b>되고 카드에 SOLD OUT이 붙습니다. 해제하면 다시 판매됩니다.
+                  </label>
                 </div>
                 <div id="admin-shipping-wrap">
                   <label class="block mb-1 text-slate-400 font-bold">🚚 배송 방식</label>
@@ -4086,7 +4097,10 @@
         <div onclick="selectProduct(${p.id})" class="bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-lg hover:border-slate-700/80 cursor-pointer flex flex-col justify-between hover:-translate-y-1 transition-all duration-300 group">
           <div>
             <div class="aspect-square bg-slate-950 relative overflow-hidden">
-              <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+              <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style="${p.soldOut ? 'filter:grayscale(1) brightness(.5);' : ''}">
+              ${p.soldOut ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                   <span style="background:rgba(2,6,23,.82);color:#fff;font-size:15px;font-weight:900;letter-spacing:2px;padding:8px 18px;border:2px solid rgba(255,255,255,.85);border-radius:8px;">SOLD OUT</span>
+                 </div>` : ''}
               <span class="absolute top-3 left-3 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded border" style="${badgeStyle(p)}">
                 ${badgeText(p)}
               </span>
@@ -4688,6 +4702,31 @@
       navigate('program');
     }
 
+    // --- SOLD OUT 처리 (관리자) ---
+    // 켜면 판매 중지 + 카드에 SOLD OUT, 끄면 즉시 재판매.
+    function toggleSoldOut(id) {
+      const p = products.find(x => String(x.id) === String(id));
+      if (!p) return;
+      p.soldOut = !p.soldOut;
+      // 품절로 바꾸면 이미 담겨 있던 장바구니에서도 빼줌 (품절 상품 주문 방지)
+      if (p.soldOut) {
+        const before = cart.length;
+        cart = cart.filter(i => String(i.product.id) !== String(p.id));
+        if (cart.length !== before) { updateCartBadge(); if (typeof renderCart === 'function') renderCart(); }
+      }
+      saveProducts();
+      renderProducts();
+      renderAdminProducts();
+      if (selectedProduct && String(selectedProduct.id) === String(p.id)) {
+        selectedProduct = p;
+        if (typeof renderDetail === 'function') renderDetail();
+      }
+      addLog("SYSTEM", `${p.soldOut ? '품절 처리' : '재판매 시작'}: ${p.name}`);
+      showToast(p.soldOut
+        ? `🚫 "${p.name}" 품절 처리했습니다. 판매가 중지됩니다.`
+        : `✅ "${p.name}" 다시 판매합니다.`);
+    }
+
     // 관리자 폼에서 뱃지가 어떻게 보일지 즉시 미리보기
     function renderBadgePreview() {
       const box = document.getElementById('admin-badge-preview');
@@ -4894,6 +4933,18 @@
         }
       }
 
+      // 🚫 품절이면 구매 버튼을 감추고 SOLD OUT 안내를 띄움
+      {
+        const soBox = document.getElementById('detail-soldout-box');
+        const buyBox = document.getElementById('detail-buy-buttons');
+        const so = !!selectedProduct.soldOut;
+        if (soBox) soBox.classList.toggle('hidden', !so);
+        if (buyBox) buyBox.classList.toggle('hidden', so);
+        // 상세페이지 하단 '지금 구매하기'도 같이 숨김
+        const dpBuy = document.querySelector('#detail-page-section button[onclick="checkoutDirectly()"]');
+        if (dpBuy) dpBuy.style.display = so ? 'none' : '';
+      }
+
       // ▶ 바로 사용 버튼 — 완전무료 / 체험 남음 / 구독중일 때만 보임
       const tryBtn = document.getElementById('detail-try-btn');
       const tryNote = document.getElementById('detail-try-note');
@@ -5051,6 +5102,11 @@
 
     // 장바구니 담기
     function addCurrentToCart() {
+      // 🚫 품절 상품은 담을 수 없음
+      if (selectedProduct.soldOut) {
+        showToast('😔 품절된 상품입니다. 재입고되면 다시 판매됩니다.');
+        return;
+      }
       const isSub = isDigital(selectedProduct.type);
       // 🔐 구독은 회원가입 먼저 (주문서까지 다 채우고 퇴짜맞지 않도록 여기서 막음)
       if (isSub && !currentUser) {
@@ -5079,7 +5135,15 @@
     }
 
     function checkoutDirectly() {
+      if (selectedProduct && selectedProduct.soldOut) {
+        showToast('😔 품절된 상품입니다. 재입고되면 다시 판매됩니다.');
+        return;
+      }
+      const before = cart.length;
+      const beforeQty = cart.reduce((s, i) => s + i.quantity, 0);
       addCurrentToCart();
+      // 담기가 막혔으면(품절·로그인필요 등) 장바구니로 넘어가지 않음
+      if (cart.length === before && cart.reduce((s, i) => s + i.quantity, 0) === beforeQty) return;
       navigate('cart');
     }
 
@@ -5247,6 +5311,21 @@
     // 최종 결제 주문서 생성 (기획 사항: 문자/카카오톡 가상 실시간 발송)
     function handleFinalCheckout(event) {
       event.preventDefault();
+
+      // 🚫 장바구니에 담아둔 사이에 품절된 상품이 있으면 주문을 막고 빼줌
+      {
+        const sold = cart.filter(i => {
+          const cur = products.find(x => String(x.id) === String(i.product.id));
+          return cur && cur.soldOut;
+        });
+        if (sold.length) {
+          const names = sold.map(i => i.product.name).join(', ');
+          cart = cart.filter(i => !sold.includes(i));
+          updateCartBadge(); renderCart();
+          showToast(`😔 "${names}" 이(가) 품절되어 장바구니에서 제외했습니다.`);
+          return;
+        }
+      }
 
       // 🔐 구독 상품은 회원가입/로그인 필수.
       // 입금 확인 후 입장코드를 그 회원 계정에 붙여줘야 프로그램을 쓸 수 있는데,
@@ -5572,6 +5651,9 @@
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
+            <button onclick="toggleSoldOut(${p.id})" class="text-[10px] font-bold px-2 py-1 rounded border transition whitespace-nowrap"
+              style="${p.soldOut ? 'color:#fff;background:#e11d48;border-color:#fb7185;' : 'color:#94a3b8;background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.3);'}"
+              title="${p.soldOut ? '누르면 다시 판매합니다' : '누르면 SOLD OUT 처리합니다'}">${p.soldOut ? 'SOLD OUT 해제' : '품절처리'}</button>
             <button onclick="editProduct(${p.id})" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold px-2 py-1 bg-emerald-500/10 rounded border border-emerald-500/20 transition">수정</button>
             <label class="text-[10px] text-sky-400 hover:text-sky-300 font-bold px-2 py-1 bg-sky-500/10 rounded border border-sky-500/20 cursor-pointer transition whitespace-nowrap">
               이미지변경
@@ -5643,6 +5725,7 @@
         const bc = document.getElementById('admin-badge-color');  if (bc) bc.value = p.badgeColor || '';
         const b2t = document.getElementById('admin-badge2-text'); if (b2t) b2t.value = p.badge2Text || '';
         const b2c = document.getElementById('admin-badge2-color');if (b2c) b2c.value = p.badge2Color || 'rose';
+        const so = document.getElementById('admin-soldout');       if (so) so.checked = !!p.soldOut;
         if (typeof renderBadgePreview === 'function') renderBadgePreview();
         onAccessModeChange();
       }
@@ -6581,6 +6664,7 @@
       const badgeColorV  = document.getElementById('admin-badge-color').value;
       const badge2TextV  = document.getElementById('admin-badge2-text').value.trim();
       const badge2ColorV = document.getElementById('admin-badge2-color').value;
+      const soldOutV     = document.getElementById('admin-soldout').checked;
       // 횟수권은 횟수만, 기간권은 기간만 저장 (반대쪽은 0 = 제한 없음)
       const rawUses = Math.max(0, parseInt(document.getElementById('admin-paid-uses').value, 10) || 0);
       const rawDays = Math.max(0, parseInt(document.getElementById('admin-valid-days').value, 10) || 0);
@@ -6601,6 +6685,7 @@
           p.accessMode = accessMode; p.trialUses = trialUses; p.paidUses = paidUses; p.validDays = validDays;
           p.badgeText = badgeTextV; p.badgeColor = badgeColorV;
           p.badge2Text = badge2TextV; p.badge2Color = badge2ColorV;
+          p.soldOut = soldOutV;
           // 새 파일을 올렸을 때만 교체 (안 올리면 기존 파일 유지)
           if (programFile) { p.programFile = programFile; p.programFileName = programFileName; }
           if (newImages.length) p.images = newImages;              // 새 이미지 있을 때만 교체
@@ -6625,6 +6710,7 @@
           accessMode, trialUses, paidUses, validDays,
           badgeText: badgeTextV, badgeColor: badgeColorV,
           badge2Text: badge2TextV, badge2Color: badge2ColorV,
+          soldOut: soldOutV,
           images: imagesArray,
           videoUrl: newVideo,
           description: desc,
