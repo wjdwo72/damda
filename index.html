@@ -1426,6 +1426,7 @@
                     <p class="text-[11px] font-bold text-slate-200">① 📁 프로그램 파일 업로드 <span class="text-emerald-400">(권장)</span></p>
                     <input type="file" id="admin-program-file" accept=".html,.htm,text/html" onchange="handleProgramFile(this)" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1.5 file:px-2.5 file:rounded file:border-0 file:bg-indigo-600 file:text-white file:font-bold file:cursor-pointer">
                     <p id="admin-program-file-name" class="text-[10px] text-emerald-400"></p>
+                    <button type="button" id="admin-program-file-clear" onclick="clearProgramFile()" class="hidden text-[10px] font-bold px-2 py-1 rounded border" style="color:#fda4af;background:rgba(225,29,72,.1);border-color:rgba(225,29,72,.3);">🗑️ 올린 파일 삭제 (아래 접속 링크 사용)</button>
                     <p class="text-[10px] text-slate-500">HTML 파일(예: 자재 단가계산기)을 올리면 <b class="text-slate-400">담다 사이트 안에서 바로 실행</b>됩니다. 별도 호스팅이 필요 없습니다.</p>
                   </div>
 
@@ -4713,6 +4714,22 @@
       navigate('program');
     }
 
+    // 업로드해둔 프로그램 파일을 지울지 여부 (지워야 '접속 링크'가 쓰입니다)
+    let clearProgramFileFlag = false;
+    function clearProgramFile() {
+      const msg = '올려둔 프로그램 파일을 지울까요?\n\n'
+        + '지우면 아래 「② 접속 링크」에 적은 주소로 실행됩니다.\n'
+        + '(vendor 폴더가 필요한 계산기는 링크 방식이어야 정상 작동합니다)';
+      if (!confirm(msg)) return;
+      clearProgramFileFlag = true;
+      pendingProgramFile = ''; pendingProgramFileName = '';
+      const el = document.getElementById('admin-program-file-name');
+      if (el) el.innerText = '🗑️ 저장하면 올린 파일이 삭제됩니다 (접속 링크로 실행)';
+      const cb = document.getElementById('admin-program-file-clear');
+      if (cb) cb.classList.add('hidden');
+      showToast('저장을 누르면 파일이 삭제되고 접속 링크가 적용됩니다.');
+    }
+
     // --- SOLD OUT 처리 (관리자) ---
     // 켜면 판매 중지 + 카드에 SOLD OUT, 끄면 즉시 재판매.
     function toggleSoldOut(id) {
@@ -5805,10 +5822,13 @@
         onAccessModeChange();
       }
       // 이미 올린 프로그램 파일이 있으면 표시 (새로 안 올리면 유지됨)
-      pendingProgramFile = ''; pendingProgramFileName = '';
+      pendingProgramFile = ''; pendingProgramFileName = ''; clearProgramFileFlag = false;
       {
         const el = document.getElementById('admin-program-file-name');
         if (el) el.innerText = p.programFile ? `📁 등록됨: ${p.programFileName || 'program.html'} (바꾸려면 새 파일 선택)` : '';
+        // 올린 파일이 있을 때만 "삭제" 버튼을 보여줌 (링크 방식으로 바꾸려면 이걸 눌러야 함)
+        const cb = document.getElementById('admin-program-file-clear');
+        if (cb) cb.classList.toggle('hidden', !p.programFile);
       }
       document.getElementById('admin-shipping').value = p.shipping === 'freight' ? 'freight' : 'parcel';
       document.getElementById('admin-name').value = p.name;
@@ -6762,7 +6782,8 @@
           p.badge2Text = badge2TextV; p.badge2Color = badge2ColorV;
           p.soldOut = soldOutV;
           // 새 파일을 올렸을 때만 교체 (안 올리면 기존 파일 유지)
-          if (programFile) { p.programFile = programFile; p.programFileName = programFileName; }
+          if (clearProgramFileFlag) { p.programFile = ''; p.programFileName = ''; }   // 링크 방식으로 전환
+          else if (programFile) { p.programFile = programFile; p.programFileName = programFileName; }
           if (newImages.length) p.images = newImages;              // 새 이미지 있을 때만 교체
           if (newVideo) p.videoUrl = newVideo;                     // 새 영상 있을 때만 교체
           if (pendingDetailImages.length) p.detailImages = pendingDetailImages.slice();
@@ -6806,6 +6827,8 @@
       pendingVideo = '';
       pendingProgramFile = ''; pendingProgramFileName = '';
       { const el = document.getElementById('admin-program-file-name'); if (el) el.innerText = ''; }
+      clearProgramFileFlag = false;
+      { const cb = document.getElementById('admin-program-file-clear'); if (cb) cb.classList.add('hidden'); }
       renderDetailPagePreview();
       renderMainImagePreview();
       removePendingVideo();
