@@ -1278,7 +1278,8 @@
                   <label class="block mb-1 text-slate-400 font-bold">적용 대상</label>
                   <select id="coupon-target" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-sky-500">
                     <option value="subscription">💻 구독 상품만</option>
-                    <option value="pass">🎫 이용권만</option>
+                    <option value="pass">🎫 횟수 이용권만</option>
+                    <option value="passday">🎫 기간 이용권만</option>
                     <option value="all">📦 전체 상품</option>
                   </select>
                 </div>
@@ -1389,8 +1390,9 @@
                   <label class="block mb-1 text-slate-400 font-bold">🧩 상품 유형 *</label>
                   <select id="admin-type" onchange="onProductTypeChange()" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-sky-500">
                     <option value="normal">📦 일반 상품 (배송)</option>
-                    <option value="subscription">💻 구독 상품 (프로그램·디지털, 매월 갱신, 배송 없음)</option>
-                    <option value="pass">🎫 이용권 (프로그램·디지털, 횟수제, 배송 없음)</option>
+                    <option value="subscription">💻 구독 상품 (매월 갱신 · 배송 없음)</option>
+                    <option value="pass">🎫 횟수 이용권 (예: 10회권 · 배송 없음)</option>
+                    <option value="passday">🎫 기간 이용권 (예: 30일권 · 배송 없음)</option>
                   </select>
                 </div>
                 <div>
@@ -1431,20 +1433,21 @@
                       <b class="text-indigo-300">유료</b> — 입장코드를 받은 구독자만 사용
                     </label>
                     <div id="admin-paid-wrap" class="space-y-2">
-                      <p class="text-[11px] font-bold text-slate-200 pt-1">구매자 이용 조건 <span class="text-slate-500 font-normal">— 횟수와 기간은 서로 별개입니다</span></p>
+                      <p class="text-[11px] font-bold text-slate-200 pt-1">구매자 이용 조건</p>
                       <div class="grid grid-cols-2 gap-2">
-                        <div>
+                        <div id="admin-use-wrap">
                           <label class="block mb-1 text-slate-400 font-bold text-[11px]">사용 횟수</label>
-                          <input type="number" id="admin-paid-uses" min="0" value="0" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-indigo-500" placeholder="0">
+                          <input type="number" id="admin-paid-uses" min="0" value="0" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-indigo-500" placeholder="10">
                           <p class="text-[10px] text-slate-500 mt-1"><b class="text-slate-400">0 = 횟수 무제한</b></p>
                         </div>
-                        <div>
+                        <div id="admin-day-wrap">
                           <label class="block mb-1 text-slate-400 font-bold text-[11px]">이용 기간 (일)</label>
                           <input type="number" id="admin-valid-days" min="0" value="30" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-indigo-500" placeholder="30">
                           <p class="text-[10px] text-slate-500 mt-1"><b class="text-slate-400">0 = 기간 무제한</b></p>
                         </div>
                       </div>
-                      <p class="text-[10px] text-slate-500">예) 횟수 10 · 기간 0 → <b class="text-slate-400">10회 쓸 때까지 계속</b> / 횟수 0 · 기간 30 → <b class="text-slate-400">30일간 무제한</b> / 둘 다 넣으면 <b class="text-slate-400">먼저 소진되는 쪽</b>에서 종료.<br>재구매(입장코드 재등록) 하면 횟수·기간이 새로 채워집니다.</p>
+                      <p id="admin-cond-hint" class="text-[10px] text-slate-500"></p>
+                      <p class="text-[10px] text-slate-500">재구매(입장코드 재등록) 하면 횟수·기간이 새로 채워집니다.</p>
                     </div>
                     <label class="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer">
                       <input type="radio" name="admin-access-mode" value="trial" onchange="onAccessModeChange()" class="accent-indigo-500">
@@ -4429,10 +4432,21 @@
     // --- 상품 유형 ---
     // normal = 일반(배송) / subscription = 월 구독 / pass = 이용권(횟수제)
     // 구독과 이용권은 둘 다 "디지털"(배송 없음 + 프로그램 사용) 이라 대부분 같이 취급함.
-    function isDigital(t) { return t === 'subscription' || t === 'pass'; }
-    function isPass(t) { return t === 'pass'; }
-    function typeBadge(t) { return t === 'pass' ? '🎫 이용권' : (t === 'subscription' ? '💻 구독' : ''); }
-    function priceLabelOf(t) { return t === 'pass' ? '횟수 이용료' : (t === 'subscription' ? '월 이용료' : '공급단가'); }
+    // pass = 횟수 이용권(N회) / passday = 기간 이용권(N일) — 서로 다른 상품
+    function isDigital(t) { return t === 'subscription' || t === 'pass' || t === 'passday'; }
+    function isPass(t) { return t === 'pass' || t === 'passday'; }
+    function isPassCount(t) { return t === 'pass'; }      // 횟수권
+    function isPassDays(t) { return t === 'passday'; }    // 기간권
+    function typeBadge(t) {
+      if (t === 'pass') return '🎫 횟수권';
+      if (t === 'passday') return '🎫 기간권';
+      return t === 'subscription' ? '💻 구독' : '';
+    }
+    function priceLabelOf(t) {
+      if (t === 'pass') return '횟수 이용료';
+      if (t === 'passday') return '기간 이용료';
+      return t === 'subscription' ? '월 이용료' : '공급단가';
+    }
 
     // --- 프로그램 이용 방식 (유료 / 무료체험 N회 / 완전무료) ---
     // 체험 횟수는 방문자 브라우저(IndexedDB)에 기록. 브라우저를 지우면 초기화되는 "맛보기 제한"임.
@@ -4538,15 +4552,29 @@
       navigate('program');
     }
 
-    // 이용 방식 라디오 → 고른 방식에 맞는 횟수 입력칸만 보이기
+    // 이용 방식 라디오 → 고른 방식 + 상품 유형에 맞는 칸만 보이기
     function onAccessModeChange() {
       const r = document.querySelector('input[name="admin-access-mode"]:checked');
       const mode = r ? r.value : 'paid';
+      const type = (document.getElementById('admin-type') || {}).value || 'normal';
       const trialWrap = document.getElementById('admin-trial-wrap');
       const paidWrap = document.getElementById('admin-paid-wrap');
       if (trialWrap) trialWrap.classList.toggle('hidden', mode !== 'trial');
-      // 유료 횟수는 '유료'와 '무료 체험' 둘 다에서 씀 (체험 끝난 뒤 구독자가 쓰는 횟수)
       if (paidWrap) paidWrap.classList.toggle('hidden', mode === 'free');
+
+      // 횟수권은 '횟수'만, 기간권은 '기간'만. 구독은 둘 다 쓸 수 있음.
+      const useWrap = document.getElementById('admin-use-wrap');
+      const dayWrap = document.getElementById('admin-day-wrap');
+      if (useWrap) useWrap.classList.toggle('hidden', isPassDays(type));
+      if (dayWrap) dayWrap.classList.toggle('hidden', isPassCount(type));
+      const hint = document.getElementById('admin-cond-hint');
+      if (hint) {
+        hint.innerHTML = isPassCount(type)
+          ? '이 상품은 <b class="text-slate-400">횟수 이용권</b>입니다. 정한 횟수를 다 쓰면 종료됩니다. (기간 제한 없음)'
+          : isPassDays(type)
+            ? '이 상품은 <b class="text-slate-400">기간 이용권</b>입니다. 정한 기간이 지나면 종료됩니다. (횟수 제한 없음)'
+            : '횟수와 기간은 서로 별개입니다. <b class="text-slate-400">0 = 그 조건 없음</b>. 둘 다 넣으면 먼저 소진되는 쪽에서 종료됩니다.';
+      }
     }
 
     // --- 카테고리 관리 (관리자) + 상품 폼 카테고리 셀렉트 ---
@@ -4633,7 +4661,7 @@
       document.getElementById('detail-single-price').innerText = `${selectedProduct.type === 'subscription' ? '월 ' : ''}${selectedProduct.price.toLocaleString()}원`;
       document.getElementById('detail-moq-info').innerText = isSub
         ? (isPass(selectedProduct.type)
-            ? `🎫 이용권 · ${selectedProduct.price.toLocaleString()}원 (배송 없음)`
+            ? `🎫 ${isPassDays(selectedProduct.type) ? '기간' : '횟수'} 이용권 · ${selectedProduct.price.toLocaleString()}원 (배송 없음)`
             : `💻 월 정기구독 · 매월 ${selectedProduct.price.toLocaleString()}원 (배송 없음)`)
         : `최소 주문 수량(MOQ): ${selectedProduct.moq}개 기준`;
 
@@ -4660,15 +4688,15 @@
           const pass = isPass(selectedProduct.type);
           const stitle = document.getElementById('detail-sub-title');
           const sterms = document.getElementById('detail-sub-terms');
-          if (stitle) stitle.innerText = pass ? '🎫 이용권 안내' : '💻 월 정기구독 안내';
+          if (stitle) stitle.innerText = pass ? `🎫 ${isPassDays(selectedProduct.type) ? '기간' : '횟수'} 이용권 안내` : '💻 월 정기구독 안내';
           if (sterms) {
             const n = paidLimitOf(selectedProduct);
             const dv = (selectedProduct.validDays === undefined || selectedProduct.validDays === null) ? 30 : selectedProduct.validDays;
-            const cond = [n ? `<b class="text-slate-400">${n}회</b>` : '<b class="text-slate-400">횟수 무제한</b>',
-                          dv ? `<b class="text-slate-400">${dv}일</b>` : '<b class="text-slate-400">기간 무제한</b>'].join(' · ');
-            sterms.innerHTML = pass
-              ? `※ 배송이 없는 디지털 상품입니다. 이용 조건: ${cond} (둘 중 먼저 소진되는 쪽에서 종료)`
-              : '※ 배송이 없는 디지털 상품이며, <b class="text-slate-400">1개월 단위</b>로 구독합니다. (매월 갱신)';
+            sterms.innerHTML = isPassCount(selectedProduct.type)
+              ? `※ 배송이 없는 디지털 상품입니다. <b class="text-slate-400">${n ? n + '회' : '무제한'}</b> 사용할 수 있는 <b class="text-slate-400">횟수 이용권</b>입니다. (기간 제한 없음)`
+              : isPassDays(selectedProduct.type)
+                ? `※ 배송이 없는 디지털 상품입니다. <b class="text-slate-400">${dv ? dv + '일' : '무제한'}</b> 동안 쓸 수 있는 <b class="text-slate-400">기간 이용권</b>입니다. (횟수 제한 없음)`
+                : '※ 배송이 없는 디지털 상품이며, <b class="text-slate-400">1개월 단위</b>로 구독합니다. (매월 갱신)';
           }
         } else {
           subBox.classList.add('hidden');
@@ -5136,7 +5164,7 @@
         `📞 연락처: ${phone}\n` +
         `📦 배송방식: ${newOrder.delivery}\n` +
         `💳 결제수단: ${payMethod}${payMethod === '무통장입금' ? ' (입금 대기)' : ''}\n` +
-        (allSub ? `🔁 이용 조건: ${cart.some(i => isPass(i.product.type)) ? '이용권 (횟수제)' : '1개월 (매월 갱신)'}\n⚠️ 입금 확인 후 위 연락처로 프로그램 접속 정보를 보내주세요.\n⚠️ 다음 이용료는 아직 자동청구가 안 되므로 재입금 안내가 필요합니다.\n` : `📍 배송지: ${address}\n`) +
+        (allSub ? `🔁 이용 조건: ${cart.some(i => isPassDays(i.product.type)) ? '기간 이용권' : (cart.some(i => isPassCount(i.product.type)) ? '횟수 이용권' : '1개월 (매월 갱신)')}\n⚠️ 입금 확인 후 위 연락처로 프로그램 접속 정보를 보내주세요.\n⚠️ 다음 이용료는 아직 자동청구가 안 되므로 재입금 안내가 필요합니다.\n` : `📍 배송지: ${address}\n`) +
         (note ? `📝 요청사항: ${note}\n` : ``) +
         (taxInvoice ? `🧾 세금계산서 발행 요청${pendingTaxFileName ? ` (사업자등록증 첨부: ${pendingTaxFileName})` : ''}\n` : ``) +
         (cashReceipt ? `🧾 현금영수증 요청 (번호: ${cashReceiptNum || '미입력'})\n` : ``) +
@@ -5349,7 +5377,7 @@
             <img src="${p.images[0]}" alt="" class="w-8 h-8 object-cover rounded bg-slate-900 shrink-0">
             <div class="min-w-0">
               <p class="font-bold text-white text-xs line-clamp-1">${isDigital(p.type) ? (isPass(p.type) ? '🎫 ' : '💻 ') : ''}${p.name}</p>
-              <p class="text-[9px] text-slate-500">${isPass(p.type) ? `이용권 · ${p.price.toLocaleString()}원` : (p.type === 'subscription' ? `구독 · 월 ${p.price.toLocaleString()}원` : `${p.price.toLocaleString()}원 / 최소 ${p.moq}개`)}</p>
+              <p class="text-[9px] text-slate-500">${isPass(p.type) ? `${isPassDays(p.type) ? '기간권' : '횟수권'} · ${p.price.toLocaleString()}원` : (p.type === 'subscription' ? `구독 · 월 ${p.price.toLocaleString()}원` : `${p.price.toLocaleString()}원 / 최소 ${p.moq}개`)}</p>
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
@@ -5392,9 +5420,11 @@
       if (progWrap) progWrap.classList.toggle('hidden', !isSub);
       if (shipWrap) shipWrap.classList.toggle('hidden', isSub); // 구독은 배송 없음
       if (priceLabel) priceLabel.textContent = isSub
-        ? (document.getElementById('admin-type').value === 'pass' ? '횟수 이용료 (원)' : '월 이용료 (원)')
+        ? priceLabelOf(document.getElementById('admin-type').value) + ' (원)'
         : '공급 단가 (원)';
       if (nameLabel) nameLabel.textContent = isSub ? '프로그램 / 서비스명' : '완충재 완제품명';
+      // 유형이 바뀌면 이용 조건 칸(횟수/기간)도 그에 맞게 다시 그림
+      if (typeof onAccessModeChange === 'function') onAccessModeChange();
     }
 
     function editProduct(id) {
@@ -6348,13 +6378,11 @@
         ? Math.max(1, parseInt(document.getElementById('admin-trial-uses').value, 10) || 3)
         : 0;
       // 구독자가 쓸 수 있는 횟수 (0 = 기간 내 무제한)
-      const paidUses = accessMode === 'free'
-        ? 0
-        : Math.max(0, parseInt(document.getElementById('admin-paid-uses').value, 10) || 0);
-      // 이용 기간(일). 0 = 기간 무제한. 횟수와 별개로 각각 적용됨.
-      const validDays = accessMode === 'free'
-        ? 0
-        : Math.max(0, parseInt(document.getElementById('admin-valid-days').value, 10) || 0);
+      // 횟수권은 횟수만, 기간권은 기간만 저장 (반대쪽은 0 = 제한 없음)
+      const rawUses = Math.max(0, parseInt(document.getElementById('admin-paid-uses').value, 10) || 0);
+      const rawDays = Math.max(0, parseInt(document.getElementById('admin-valid-days').value, 10) || 0);
+      const paidUses = (accessMode === 'free' || isPassDays(type)) ? 0 : rawUses;
+      const validDays = (accessMode === 'free' || isPassCount(type)) ? 0 : rawDays;
 
       let urlImages = imagesStr.split(',').map(img => img.trim()).filter(img => img !== '');
       // 업로드한 대표 이미지 파일 + URL 이미지 합치기 (업로드 파일 우선)
