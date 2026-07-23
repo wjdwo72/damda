@@ -455,15 +455,6 @@
         </div>
       </section>
 
-      <!-- 배너 광고 영역 (관리자에서 등록. 하나도 없으면 통째로 숨김) -->
-      <section id="banner-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 hidden">
-        <div class="mb-6">
-          <h3 class="text-2xl font-black text-white tracking-tight flex items-center gap-2" id="banner-heading">📢 함께 보면 좋은 서비스</h3>
-          <p class="text-xs text-slate-400 mt-1" id="banner-subheading">담다가 소개하는 파트너 서비스입니다.</p>
-        </div>
-        <div id="banner-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-      </section>
-
       <!-- 상품 무한 등록 그리드 전시 영역 -->
       <section id="products-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
@@ -498,6 +489,15 @@
         <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- JS에서 동적으로 상품이 주입되는 공간입니다. -->
         </div>
+      </section>
+
+      <!-- 배너 광고 영역 (상품 라인업 아래. 관리자에서 등록, 하나도 없으면 통째로 숨김) -->
+      <section id="banner-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 hidden">
+        <div class="mb-6">
+          <h3 class="text-2xl font-black text-white tracking-tight flex items-center gap-2" id="banner-heading">📢 함께 보면 좋은 서비스</h3>
+          <p class="text-xs text-slate-400 mt-1" id="banner-subheading">담다가 소개하는 파트너 서비스입니다.</p>
+        </div>
+        <div id="banner-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
       </section>
     </div>
 
@@ -1482,8 +1482,9 @@
                 <input type="text" id="banner-subtitle" placeholder="예: youtube.com 또는 010-6290-8900" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
               </div>
               <div>
-                <label class="text-[11px] font-bold text-slate-300 block mb-1">클릭 시 이동할 주소</label>
-                <input type="text" id="banner-url" placeholder="예: https://youtube.com/@conma" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
+                <label class="text-[11px] font-bold text-slate-300 block mb-1">클릭 시 이동할 주소 <span class="text-slate-500">(유튜브 영상 주소면 미리보기 자동 표시)</span></label>
+                <input type="text" id="banner-url" placeholder="예: https://youtu.be/abc123 (유튜브면 썸네일 자동)" oninput="previewBannerUrl()" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
+                <p id="banner-url-preview" class="hidden text-[10px] text-emerald-400 mt-1"></p>
               </div>
               <div>
                 <label class="text-[11px] font-bold text-slate-300 block mb-1">버튼 문구</label>
@@ -1492,9 +1493,9 @@
             </div>
 
             <div>
-              <label class="text-[11px] font-bold text-slate-300 block mb-1">배너 이미지 <span class="text-slate-500">(가로로 긴 사진이 잘 어울립니다)</span></label>
-              <input type="file" id="banner-image-file" accept="image/*" onchange="handleBannerImage(this)" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-sky-500 file:text-white">
-              <img id="banner-image-preview" class="hidden mt-2 rounded-lg border border-slate-800" style="max-height:120px;object-fit:cover;">
+              <label class="text-[11px] font-bold text-slate-300 block mb-1">배너 이미지 <span class="text-slate-500">(여러 장 고르면 자동으로 넘어갑니다 · 가로로 긴 사진 권장)</span></label>
+              <input type="file" id="banner-image-file" accept="image/*" multiple onchange="handleBannerImage(this)" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-sky-500 file:text-white">
+              <div id="banner-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
 
             <button onclick="addBanner()" class="w-full py-3 rounded-lg font-bold text-sm" style="background:#0ea5e9;color:#fff;border:none;cursor:pointer;">➕ 배너 추가</button>
@@ -2158,30 +2159,91 @@
     // { id, image(사진), title(제목), subtitle(부제/도메인), url(클릭 시 이동), btnText(버튼 문구) }
     let banners = [];
 
+    // 유튜브 주소에서 영상 ID 뽑기 (youtu.be / watch?v= / shorts/ / embed/ 모두 지원)
+    function youtubeId(url) {
+      if (!url) return '';
+      const m = String(url).match(/(?:youtu\.be\/|watch\?v=|\/shorts\/|\/embed\/|\/v\/)([A-Za-z0-9_-]{11})/);
+      return m ? m[1] : '';
+    }
+    // 유튜브면 썸네일(미리보기) 주소를 돌려줌
+    function youtubeThumb(url) {
+      const id = youtubeId(url);
+      return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : '';
+    }
+
+    // 배너 사진 목록 꺼내기.
+    // 우선순위: 올린 사진들 → 없으면 URL이 유튜브면 썸네일 자동 사용 → 옛 image 한 장
+    function bannerImages(b) {
+      if (Array.isArray(b.images) && b.images.length) return b.images;
+      const yt = youtubeThumb(b.url);
+      if (yt) return [yt];
+      return b.image ? [b.image] : [];
+    }
+    // 이 배너가 유튜브 영상인지 (재생 아이콘 표시용)
+    function bannerIsYoutube(b) {
+      return !(Array.isArray(b.images) && b.images.length) && !!youtubeId(b.url);
+    }
+
+    let bannerSlideTimers = [];
     function renderBanners() {
       const sec = document.getElementById('banner-section');
       const grid = document.getElementById('banner-grid');
       if (!sec || !grid) return;
+      bannerSlideTimers.forEach(t => clearInterval(t));   // 다시 그릴 때 옛 타이머 정리
+      bannerSlideTimers = [];
       if (!banners.length) { sec.classList.add('hidden'); return; }
       sec.classList.remove('hidden');
-      grid.innerHTML = banners.map(b => {
+      grid.innerHTML = banners.map((b, i) => {
+        const imgs = bannerImages(b);
+        const isYt = bannerIsYoutube(b);
         const clickable = b.url ? `onclick="openBannerLink('${(b.url || '').replace(/'/g, "\\'")}')" style="cursor:pointer;"` : '';
+        // 유튜브 재생 아이콘 (썸네일 위에 얹음)
+        const playIcon = isYt ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+             <div style="width:44px;height:32px;background:rgba(229,9,20,.92);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+               <div style="width:0;height:0;border-left:12px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;margin-left:3px;"></div>
+             </div></div>` : '';
         return `
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-sky-500/40 transition group" ${clickable}>
-          ${b.image
-            ? `<div style="width:100%;aspect-ratio:16/10;background:#0b1220;overflow:hidden;">
-                 <img src="${b.image}" alt="${b.title || ''}" style="width:100%;height:100%;object-fit:cover;" class="group-hover:scale-105 transition-transform duration-300">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-sky-500/40 transition group" ${clickable}>
+          ${imgs.length
+            ? `<div style="position:relative;width:100%;aspect-ratio:16/9;background:#0b1220;overflow:hidden;">
+                 <img id="banner-img-${i}" src="${imgs[0]}" alt="${b.title || ''}"
+                      style="width:100%;height:100%;object-fit:cover;transition:opacity .35s;" class="group-hover:scale-105 transition-transform duration-300">
+                 ${playIcon}
+                 ${imgs.length > 1 ? `<div id="banner-dots-${i}" style="position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;gap:4px;">
+                   ${imgs.map((_, k) => `<span style="width:5px;height:5px;border-radius:9999px;background:${k === 0 ? '#38bdf8' : 'rgba(255,255,255,.45)'};display:inline-block;"></span>`).join('')}
+                 </div>` : ''}
                </div>`
-            : `<div style="width:100%;aspect-ratio:16/10;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;font-size:32px;">📢</div>`}
-          <div class="p-4">
-            <p class="font-bold text-white text-sm line-clamp-1">${b.title || ''}</p>
-            ${b.subtitle ? `<p class="text-[11px] text-sky-400 mt-1 line-clamp-1">${b.subtitle}</p>` : ''}
+            : `<div style="width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;font-size:26px;">📢</div>`}
+          <div class="px-3.5 py-2.5">
+            <p class="font-bold text-white text-[13px] line-clamp-1">${b.title || ''}</p>
+            ${b.subtitle ? `<p class="text-[11px] text-sky-400 mt-0.5 line-clamp-1">${b.subtitle}</p>` : ''}
+            ${b.url ? `<p class="text-[11px] font-bold mt-1.5" style="color:#fbbf24;">${b.btnText || (isYt ? '영상 보기' : '자세히 보기')} →</p>` : ''}
           </div>
-          ${b.url ? `<div class="px-4 py-3 border-t border-slate-800 text-center">
-            <span class="text-xs font-bold" style="color:#fbbf24;">${b.btnText || '자세히 보기'} →</span>
-          </div>` : ''}
         </div>`;
       }).join('');
+      startBannerSlides();
+    }
+
+    // 사진이 2장 이상인 배너는 3.5초마다 저절로 다음 장으로
+    function startBannerSlides() {
+      banners.forEach((b, i) => {
+        const imgs = bannerImages(b);
+        if (imgs.length < 2) return;
+        const el = document.getElementById(`banner-img-${i}`);
+        const dots = document.getElementById(`banner-dots-${i}`);
+        if (!el) return;
+        let idx = 0;
+        const timer = setInterval(() => {
+          if (!document.body.contains(el)) { clearInterval(timer); return; }
+          idx = (idx + 1) % imgs.length;
+          el.style.opacity = '0';
+          setTimeout(() => { el.src = imgs[idx]; el.style.opacity = '1'; }, 300);
+          if (dots) [...dots.children].forEach((d, k) => {
+            d.style.background = k === idx ? '#38bdf8' : 'rgba(255,255,255,.45)';
+          });
+        }, 3500);
+        bannerSlideTimers.push(timer);
+      });
     }
 
     // 배너 클릭 → 새 탭으로 (담다를 벗어나지 않게)
@@ -2194,15 +2256,48 @@
     function saveBanners() { idbSet('banners', banners); shopPublishSoon(); }
 
     // --- 관리자: 배너 광고 관리 ---
-    let pendingBannerImage = '';
+    let pendingBannerImages = [];
     async function handleBannerImage(input) {
-      const f = input.files && input.files[0];
-      if (!f) return;
-      // 배너는 가로로 크게 보이므로 1000px 로 줄여 저장 (용량 절약)
-      pendingBannerImage = await fileToScaledDataURL(f, 1000, 'image/jpeg', 0.82);
-      const p = document.getElementById('banner-image-preview');
-      if (p) { p.src = pendingBannerImage; p.classList.remove('hidden'); }
+      const files = [...(input.files || [])];
+      if (!files.length) return;
+      // 배너 사진은 여러 장 → 서버(설정 문서 1MB)에 같이 들어가므로 넉넉히 줄여서 저장
+      for (const f of files) {
+        if (!f.type.startsWith('image/')) continue;
+        pendingBannerImages.push(await fileToScaledDataURL(f, 900, 'image/jpeg', 0.75));
+      }
+      renderBannerImagePreview();
       input.value = '';
+    }
+
+    function renderBannerImagePreview() {
+      const box = document.getElementById('banner-image-preview');
+      if (!box) return;
+      box.innerHTML = pendingBannerImages.map((u, i) => `
+        <div style="position:relative;">
+          <img src="${u}" style="width:96px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #334155;">
+          <button onclick="removePendingBannerImage(${i})" title="빼기"
+                  style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:9999px;border:none;background:#e11d48;color:#fff;font-size:11px;font-weight:800;cursor:pointer;line-height:1;">✕</button>
+        </div>`).join('') +
+        (pendingBannerImages.length > 1 ? `<p style="width:100%;font-size:10px;color:#34d399;margin-top:2px;">✅ ${pendingBannerImages.length}장 — 3.5초마다 자동으로 넘어갑니다</p>` : '');
+    }
+
+    function removePendingBannerImage(i) {
+      pendingBannerImages.splice(i, 1);
+      renderBannerImagePreview();
+    }
+
+    // 주소칸에 유튜브 링크를 넣으면 "썸네일이 자동으로 잡힌다"고 알려주고 미리 보여줌
+    function previewBannerUrl() {
+      const url = document.getElementById('banner-url').value.trim();
+      const box = document.getElementById('banner-url-preview');
+      if (!box) return;
+      const thumb = youtubeThumb(url);
+      if (thumb && !pendingBannerImages.length) {
+        box.classList.remove('hidden');
+        box.innerHTML = `▶ 유튜브 미리보기가 자동으로 표시됩니다 <img src="${thumb}" style="display:block;margin-top:4px;width:120px;height:68px;object-fit:cover;border-radius:6px;border:1px solid #334155;">`;
+      } else {
+        box.classList.add('hidden'); box.innerHTML = '';
+      }
     }
 
     function addBanner() {
@@ -2214,16 +2309,15 @@
         subtitle: document.getElementById('banner-subtitle').value.trim(),
         url: document.getElementById('banner-url').value.trim(),
         btnText: document.getElementById('banner-btntext').value.trim(),
-        image: pendingBannerImage || ''
+        images: pendingBannerImages.slice()   // 여러 장 → 자동 슬라이드
       });
       saveBanners();
       renderBanners();
       renderAdminBanners();
       // 폼 비우기
       ['banner-title', 'banner-subtitle', 'banner-url', 'banner-btntext'].forEach(id => document.getElementById(id).value = '');
-      pendingBannerImage = '';
-      const p = document.getElementById('banner-image-preview');
-      if (p) { p.src = ''; p.classList.add('hidden'); }
+      pendingBannerImages = [];
+      renderBannerImagePreview();
       addLog("SYSTEM", `배너 광고 등록: ${title}`);
       showToast(`📢 "${title}" 배너가 추가되었습니다.`);
     }
@@ -2235,20 +2329,27 @@
         box.innerHTML = '<p class="text-slate-500 text-center py-6 text-xs">등록된 배너가 없습니다. 위에서 추가해주세요.</p>';
         return;
       }
-      box.innerHTML = banners.map((b, i) => `
+      box.innerHTML = banners.map((b, i) => {
+        const imgs = bannerImages(b);
+        return `
         <div class="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-lg p-3">
-          ${b.image ? `<img src="${b.image}" style="width:64px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;">`
+          ${imgs.length ? `<div style="position:relative;flex-shrink:0;">
+                <img src="${imgs[0]}" style="width:64px;height:44px;object-fit:cover;border-radius:6px;">
+                ${bannerIsYoutube(b) ? `<span style="position:absolute;top:2px;left:2px;background:rgba(229,9,20,.92);color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:4px;">▶ YT</span>` : ''}
+                ${imgs.length > 1 ? `<span style="position:absolute;bottom:2px;right:2px;background:rgba(2,6,23,.85);color:#38bdf8;font-size:9px;font-weight:800;padding:1px 4px;border-radius:4px;">🔄${imgs.length}</span>` : ''}
+              </div>`
                     : `<div style="width:64px;height:44px;background:#1e293b;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📢</div>`}
           <div class="min-w-0 flex-1">
             <p class="font-bold text-white text-xs truncate">${b.title}</p>
-            <p class="text-[10px] text-slate-400 truncate">${b.subtitle || ''} ${b.url ? '· ' + b.url : ''}</p>
+            <p class="text-[10px] text-slate-400 truncate">${bannerIsYoutube(b) ? '유튜브 미리보기 · ' : ''}${imgs.length > 1 ? `사진 ${imgs.length}장 자동슬라이드 · ` : ''}${b.subtitle || ''} ${b.url ? '· ' + b.url : ''}</p>
           </div>
           <div class="flex gap-1 shrink-0">
             <button onclick="moveBanner(${i}, -1)" title="위로" class="text-slate-300 font-bold px-2 py-1 text-[10px] bg-slate-800 rounded border border-slate-700">▲</button>
             <button onclick="moveBanner(${i}, 1)" title="아래로" class="text-slate-300 font-bold px-2 py-1 text-[10px] bg-slate-800 rounded border border-slate-700">▼</button>
             <button onclick="deleteBanner(${b.id})" class="text-rose-400 font-bold px-2 py-1 text-[10px] bg-rose-500/10 rounded border border-rose-500/20">삭제</button>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
 
     function moveBanner(idx, dir) {
@@ -5032,9 +5133,18 @@
         // 관리자에서 지운 상품은 서버에서도 제거
         for (const id of 기존) await FB.deleteDoc(FB.doc(FB.db, 'shop_products', id));
 
-        // 2) 설정 — 로고·문구·배너 등. 동영상(용량 큼)은 서버에 안 올림
+        // 2) 배너 — 사진이 여러 장이라 커질 수 있어 상품처럼 1개당 문서 1개로 나눠 담음
+        const bsnap = await FB.getDocs(FB.collection(FB.db, 'shop_banners'));
+        const b기존 = new Set(bsnap.docs.map(d => d.id));
+        for (const b of banners) {
+          await FB.setDoc(FB.doc(FB.db, 'shop_banners', String(b.id)), b);
+          b기존.delete(String(b.id));
+        }
+        for (const id of b기존) await FB.deleteDoc(FB.doc(FB.db, 'shop_banners', id));
+
+        // 3) 설정 — 로고·문구 등 작은 값들. 동영상(용량 큼)은 서버에 안 올림
         await FB.setDoc(FB.doc(FB.db, 'shop', 'config'), {
-          banners, categories, featureImages, siteContent, themeColors,
+          categories, featureImages, siteContent, themeColors,
           bankInfo: bankInfo || '',
           logo: logoDataUrl || '',
           heroMedia: (heroMedia || []).filter(m => !String(m.url || '').startsWith('data:video')),
@@ -5063,16 +5173,19 @@
       try {
         const cfgSnap = await FB.getDoc(FB.doc(FB.db, 'shop', 'config'));
         const prodSnap = await FB.getDocs(FB.collection(FB.db, 'shop_products'));
-        if (!cfgSnap.exists() && prodSnap.empty) return false;   // 아직 아무것도 안 올림
+        const banSnap = await FB.getDocs(FB.collection(FB.db, 'shop_banners'));
+        if (!cfgSnap.exists() && prodSnap.empty && banSnap.empty) return false;   // 아직 아무것도 안 올림
 
         if (!prodSnap.empty) {
           products = prodSnap.docs.map(d => d.data());
           idbSet('products', products);
           renderProducts(); if (typeof renderAdminProducts === 'function') renderAdminProducts();
         }
+        // 배너 (서버에 하나라도 있으면 그걸로 교체)
+        banners = banSnap.docs.map(d => d.data());
+        idbSet('banners', banners); renderBanners(); if (typeof renderAdminBanners === 'function') renderAdminBanners();
         if (cfgSnap.exists()) {
           const c = cfgSnap.data();
-          if (Array.isArray(c.banners)) { banners = c.banners; idbSet('banners', banners); renderBanners(); if (typeof renderAdminBanners === 'function') renderAdminBanners(); }
           if (Array.isArray(c.categories)) { categories = c.categories; idbSet('categories', categories); if (typeof renderCategoryTabs === 'function') renderCategoryTabs(); if (typeof renderCategoryAdmin === 'function') renderCategoryAdmin(); }
           if (Array.isArray(c.featureImages)) { featureImages = c.featureImages; idbSet('feature_images', featureImages); applyFeatureImages(); }
           if (typeof c.logo === 'string' && c.logo) { logoDataUrl = c.logo; idbSet('logo', c.logo); applyLogo(); }
