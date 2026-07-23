@@ -1156,6 +1156,7 @@
           <button data-tab="members" onclick="switchAdminTab('members')" class="admin-tab-btn px-4 py-2 rounded-lg transition">회원 관리</button>
           <button data-tab="products" onclick="switchAdminTab('products')" class="admin-tab-btn px-4 py-2 rounded-lg transition">상품 박스 추가·삭제</button>
           <button data-tab="banners" onclick="switchAdminTab('banners')" class="admin-tab-btn px-4 py-2 rounded-lg transition">📢 배너 광고</button>
+          <button data-tab="payment" onclick="switchAdminTab('payment')" class="admin-tab-btn px-4 py-2 rounded-lg transition">💳 결제 설정</button>
           <button data-tab="content" onclick="switchAdminTab('content')" class="admin-tab-btn px-4 py-2 rounded-lg transition">사이트 콘텐츠·다국어 관리</button>
           <button data-tab="notify" onclick="switchAdminTab('notify')" class="admin-tab-btn px-4 py-2 rounded-lg transition">알림 발송 설정</button>
           <button data-tab="account" onclick="switchAdminTab('account')" class="admin-tab-btn px-4 py-2 rounded-lg transition">계정 설정</button>
@@ -1739,6 +1740,10 @@
             </form>
           </div>
 
+        </div>
+
+        <!-- TAB: 결제 설정 (무통장입금 계좌 + 카드결제) -->
+        <div id="admin-tab-payment" class="admin-tab-panel space-y-6 hidden">
           <!-- 무통장입금 계좌 안내 (결제수단에 노출) -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3">
             <h3 class="font-bold text-base text-white flex items-center gap-2">🏦 무통장입금 계좌 안내</h3>
