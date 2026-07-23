@@ -4824,13 +4824,16 @@
       if (programBlobUrl) { URL.revokeObjectURL(programBlobUrl); programBlobUrl = null; }
 
       let src = '';
-      if (p.programFile) {
+      if (p.programUrl) {
+        // 접속 링크가 있으면 링크를 우선 사용 (vendor 폴더가 필요한 계산기·서버 연동 버전 등)
+        // ?v= 를 붙여 브라우저가 옛 캐시 대신 최신 파일을 받게 함
+        const sep = p.programUrl.indexOf('?') >= 0 ? '&' : '?';
+        src = p.programUrl + sep + 'v=' + Date.now();
+      } else if (p.programFile) {
         // 업로드한 HTML을 사이트 안에서 그대로 실행 (별도 호스팅 불필요)
         const blob = new Blob([p.programFile], { type: 'text/html;charset=utf-8' });
         programBlobUrl = URL.createObjectURL(blob);
         src = programBlobUrl;
-      } else if (p.programUrl) {
-        src = p.programUrl;
       } else {
         showToast('프로그램 파일/주소가 설정되지 않았습니다. (관리자 문의)');
         return;
