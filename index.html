@@ -682,9 +682,9 @@
             </div>
 
             <!-- 품절 안내 (품절 상품일 때만) -->
-            <div id="detail-soldout-box" class="hidden rounded-xl p-4 text-center" style="background:rgba(2,6,23,.7);border:1px solid #ef4444;">
-              <p class="font-black text-base" style="letter-spacing:2px;color:#ef4444;">SOLD OUT</p>
-              <p class="text-[11px] text-slate-400 mt-1">현재 품절된 상품입니다. 재입고되면 다시 판매됩니다.</p>
+            <div id="detail-soldout-box" class="hidden rounded-xl p-4 text-center" style="background:#dc2626;border:2px solid #ef4444;box-shadow:0 4px 14px rgba(220,38,38,.35);">
+              <p class="font-black text-base" style="letter-spacing:2px;color:#fff;">SOLD OUT</p>
+              <p class="text-[11px] mt-1" style="color:rgba(255,255,255,.9);">현재 품절된 상품입니다. 재입고되면 다시 판매됩니다.</p>
             </div>
 
             <div id="detail-buy-buttons" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4099,7 +4099,7 @@
             <div class="aspect-square bg-slate-950 relative overflow-hidden">
               <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" style="${p.soldOut ? 'filter:grayscale(1) brightness(.5);' : ''}">
               ${p.soldOut ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-                   <span style="background:rgba(2,6,23,.82);color:#ef4444;font-size:15px;font-weight:900;letter-spacing:2px;padding:8px 18px;border:2px solid #ef4444;border-radius:8px;">SOLD OUT</span>
+                   <span style="background:#dc2626;color:#fff;font-size:15px;font-weight:900;letter-spacing:2px;padding:9px 20px;border:2px solid #ef4444;border-radius:8px;box-shadow:0 4px 14px rgba(220,38,38,.5);">SOLD OUT</span>
                  </div>` : ''}
               <span class="absolute top-3 left-3 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded border" style="${badgeStyle(p)}">
                 ${badgeText(p)}
