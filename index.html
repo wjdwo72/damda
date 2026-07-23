@@ -1502,7 +1502,10 @@
               <div id="banner-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
 
-            <button onclick="addBanner()" class="w-full py-3 rounded-lg font-bold text-sm" style="background:#0ea5e9;color:#fff;border:none;cursor:pointer;">➕ 배너 추가</button>
+            <div style="display:flex;gap:8px;">
+              <button id="banner-submit-btn" onclick="addBanner()" class="py-3 rounded-lg font-bold text-sm" style="flex:1;background:#0ea5e9;color:#fff;border:none;cursor:pointer;">➕ 배너 추가</button>
+              <button id="banner-cancel-btn" onclick="cancelEditBanner()" class="hidden py-3 px-5 rounded-lg font-bold text-sm" style="background:#334155;color:#fff;border:none;cursor:pointer;">✕ 취소</button>
+            </div>
           </div>
 
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
@@ -2261,6 +2264,7 @@
 
     // --- 관리자: 배너 광고 관리 ---
     let pendingBannerImages = [];
+    let editingBannerId = null;   // 수정 중인 배너 id (없으면 새로 추가)
     async function handleBannerImage(input) {
       const files = [...(input.files || [])];
       if (!files.length) return;
@@ -2307,23 +2311,68 @@
     function addBanner() {
       const title = document.getElementById('banner-title').value.trim();
       if (!title) { showToast('배너 제목을 입력해주세요.'); return; }
-      banners.push({
-        id: Date.now(),
+      const data = {
         title,
         subtitle: document.getElementById('banner-subtitle').value.trim(),
         url: document.getElementById('banner-url').value.trim(),
         btnText: document.getElementById('banner-btntext').value.trim(),
         images: pendingBannerImages.slice()   // 여러 장 → 자동 슬라이드
-      });
+      };
+      if (editingBannerId !== null) {
+        // 수정 모드 — 기존 배너 덮어쓰기 (id·순서 유지)
+        const b = banners.find(x => String(x.id) === String(editingBannerId));
+        if (b) Object.assign(b, data);
+        addLog("SYSTEM", `배너 광고 수정: ${title}`);
+        showToast(`✏️ "${title}" 배너가 수정되었습니다.`);
+      } else {
+        banners.push({ id: Date.now(), ...data });
+        addLog("SYSTEM", `배너 광고 등록: ${title}`);
+        showToast(`📢 "${title}" 배너가 추가되었습니다.`);
+      }
       saveBanners();
       renderBanners();
       renderAdminBanners();
-      // 폼 비우기
+      resetBannerForm();
+    }
+
+    // 폼을 비우고 "추가" 모드로 되돌림
+    function resetBannerForm() {
       ['banner-title', 'banner-subtitle', 'banner-url', 'banner-btntext'].forEach(id => document.getElementById(id).value = '');
       pendingBannerImages = [];
+      editingBannerId = null;
       renderBannerImagePreview();
-      addLog("SYSTEM", `배너 광고 등록: ${title}`);
-      showToast(`📢 "${title}" 배너가 추가되었습니다.`);
+      previewBannerUrl();
+      const btn = document.getElementById('banner-submit-btn');
+      if (btn) { btn.innerText = '➕ 배너 추가'; btn.style.background = '#0ea5e9'; }
+      const cancel = document.getElementById('banner-cancel-btn');
+      if (cancel) cancel.classList.add('hidden');
+    }
+
+    // 수정 버튼 → 그 배너 내용을 위 폼에 채우고 "수정 저장" 모드로
+    function editBanner(id) {
+      const b = banners.find(x => String(x.id) === String(id));
+      if (!b) return;
+      editingBannerId = b.id;
+      document.getElementById('banner-title').value = b.title || '';
+      document.getElementById('banner-subtitle').value = b.subtitle || '';
+      document.getElementById('banner-url').value = b.url || '';
+      document.getElementById('banner-btntext').value = b.btnText || '';
+      pendingBannerImages = Array.isArray(b.images) ? b.images.slice() : [];
+      renderBannerImagePreview();
+      previewBannerUrl();
+      const btn = document.getElementById('banner-submit-btn');
+      if (btn) { btn.innerText = '💾 수정 저장'; btn.style.background = '#f59e0b'; }
+      const cancel = document.getElementById('banner-cancel-btn');
+      if (cancel) cancel.classList.remove('hidden');
+      const titleInput = document.getElementById('banner-title');
+      titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      titleInput.focus();
+      showToast('✏️ 수정 모드 — 내용을 바꾼 뒤 "수정 저장"을 누르세요.');
+    }
+
+    function cancelEditBanner() {
+      resetBannerForm();
+      showToast('수정을 취소했습니다.');
     }
 
     function renderAdminBanners() {
@@ -2350,6 +2399,7 @@
           <div class="flex gap-1 shrink-0">
             <button onclick="moveBanner(${i}, -1)" title="위로" class="text-slate-300 font-bold px-2 py-1 text-[10px] bg-slate-800 rounded border border-slate-700">▲</button>
             <button onclick="moveBanner(${i}, 1)" title="아래로" class="text-slate-300 font-bold px-2 py-1 text-[10px] bg-slate-800 rounded border border-slate-700">▼</button>
+            <button onclick="editBanner(${b.id})" class="font-bold px-2 py-1 text-[10px] rounded border" style="color:#fbbf24;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);">수정</button>
             <button onclick="deleteBanner(${b.id})" class="text-rose-400 font-bold px-2 py-1 text-[10px] bg-rose-500/10 rounded border border-rose-500/20">삭제</button>
           </div>
         </div>`;
