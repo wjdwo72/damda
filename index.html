@@ -1278,8 +1278,8 @@
                   <label class="block mb-1 text-slate-400 font-bold">적용 대상</label>
                   <select id="coupon-target" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-sky-500">
                     <option value="subscription">💻 구독 상품만</option>
-                    <option value="pass">🎫 횟수 이용권만</option>
-                    <option value="passday">🎫 기간 이용권만</option>
+                    <option value="pass">🎫 이용권(횟수제)만</option>
+                    <option value="passday">🎫 이용권(기간제)만</option>
                     <option value="all">📦 전체 상품</option>
                   </select>
                 </div>
@@ -1391,8 +1391,8 @@
                   <select id="admin-type" onchange="onProductTypeChange()" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-sky-500">
                     <option value="normal">📦 일반 상품 (배송)</option>
                     <option value="subscription">💻 구독 상품 (매월 갱신 · 배송 없음)</option>
-                    <option value="pass">🎫 횟수 이용권 (예: 10회권 · 배송 없음)</option>
-                    <option value="passday">🎫 기간 이용권 (예: 30일권 · 배송 없음)</option>
+                    <option value="pass">🎫 이용권 — 횟수제 (정한 횟수만큼 · 배송 없음)</option>
+                    <option value="passday">🎫 이용권 — 기간제 (정한 기간만큼 · 배송 없음)</option>
                   </select>
                 </div>
                 <div>
@@ -4041,7 +4041,7 @@
             <div class="aspect-square bg-slate-950 relative overflow-hidden">
               <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
               <span class="absolute top-3 left-3 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded border ${isDigital(p.type) ? 'border-indigo-400/40' : 'bg-slate-950/80 text-sky-400 border-slate-800'}" ${isDigital(p.type) ? 'style="background:rgba(79,70,229,.85);color:#fff;"' : ''}>
-                ${isDigital(p.type) ? typeBadge(p.type) : `MOQ ${p.moq}개`}
+                ${isDigital(p.type) ? typeBadge(p) : `MOQ ${p.moq}개`}
               </span>
               ${p.videoUrl ? `
                 <span class="absolute top-3 right-3 bg-rose-500 text-white p-1.5 rounded-full shadow-lg">
@@ -4462,14 +4462,20 @@
     function isPass(t) { return t === 'pass' || t === 'passday'; }
     function isPassCount(t) { return t === 'pass'; }      // 횟수권
     function isPassDays(t) { return t === 'passday'; }    // 기간권
-    function typeBadge(t) {
-      if (t === 'pass') return '🎫 횟수권';
-      if (t === 'passday') return '🎫 기간권';
+    // 뱃지에 실제 값을 넣어줌 — "30일 이용권" / "10회 이용권"
+    function typeBadge(p) {
+      const t = (p && p.type) || p;                  // 상품 객체 또는 유형 문자열 둘 다 받음
+      if (typeof p === 'string') return t === 'pass' ? '🎫 이용권' : (t === 'passday' ? '🎫 이용권' : (t === 'subscription' ? '💻 구독' : ''));
+      if (t === 'pass') { const n = paidLimitOf(p); return n ? `🎫 ${n}회 이용권` : '🎫 이용권'; }
+      if (t === 'passday') {
+        const d = (p.validDays === undefined || p.validDays === null) ? 30 : p.validDays;
+        return d ? `🎫 ${d}일 이용권` : '🎫 이용권';
+      }
       return t === 'subscription' ? '💻 구독' : '';
     }
     function priceLabelOf(t) {
-      if (t === 'pass') return '횟수 이용료';
-      if (t === 'passday') return '기간 이용료';
+      if (t === 'pass') return '이용료 (횟수제)';
+      if (t === 'passday') return '이용료 (기간제)';
       return t === 'subscription' ? '월 이용료' : '공급단가';
     }
 
@@ -4751,7 +4757,7 @@
       document.getElementById('detail-single-price').innerText = `${selectedProduct.type === 'subscription' ? '월 ' : ''}${selectedProduct.price.toLocaleString()}원`;
       document.getElementById('detail-moq-info').innerText = isSub
         ? (isPass(selectedProduct.type)
-            ? `🎫 ${isPassDays(selectedProduct.type) ? '기간' : '횟수'} 이용권 · ${selectedProduct.price.toLocaleString()}원 (배송 없음)`
+            ? `${typeBadge(selectedProduct)} · ${selectedProduct.price.toLocaleString()}원 (배송 없음)`
             : `💻 월 정기구독 · 매월 ${selectedProduct.price.toLocaleString()}원 (배송 없음)`)
         : `최소 주문 수량(MOQ): ${selectedProduct.moq}개 기준`;
 
@@ -4778,7 +4784,7 @@
           const pass = isPass(selectedProduct.type);
           const stitle = document.getElementById('detail-sub-title');
           const sterms = document.getElementById('detail-sub-terms');
-          if (stitle) stitle.innerText = pass ? `🎫 ${isPassDays(selectedProduct.type) ? '기간' : '횟수'} 이용권 안내` : '💻 월 정기구독 안내';
+          if (stitle) stitle.innerText = pass ? `${typeBadge(selectedProduct)} 안내` : '💻 월 정기구독 안내';
           if (sterms) {
             const n = paidLimitOf(selectedProduct);
             const dv = (selectedProduct.validDays === undefined || selectedProduct.validDays === null) ? 30 : selectedProduct.validDays;
@@ -5467,7 +5473,7 @@
             <img src="${p.images[0]}" alt="" class="w-8 h-8 object-cover rounded bg-slate-900 shrink-0">
             <div class="min-w-0">
               <p class="font-bold text-white text-xs line-clamp-1">${isDigital(p.type) ? (isPass(p.type) ? '🎫 ' : '💻 ') : ''}${p.name}</p>
-              <p class="text-[9px] text-slate-500">${isPass(p.type) ? `${isPassDays(p.type) ? '기간권' : '횟수권'} · ${p.price.toLocaleString()}원` : (p.type === 'subscription' ? `구독 · 월 ${p.price.toLocaleString()}원` : `${p.price.toLocaleString()}원 / 최소 ${p.moq}개`)}</p>
+              <p class="text-[9px] text-slate-500">${isPass(p.type) ? `${isPassDays(p.type) ? ((p.validDays === undefined || p.validDays === null ? 30 : p.validDays) || '무제한') + '일' : (paidLimitOf(p) || '무제한') + '회'} 이용권 · ${p.price.toLocaleString()}원` : (p.type === 'subscription' ? `구독 · 월 ${p.price.toLocaleString()}원` : `${p.price.toLocaleString()}원 / 최소 ${p.moq}개`)}</p>
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0">
