@@ -1472,6 +1472,53 @@
                   <select id="admin-category" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-sky-500"></select>
                   <span class="text-[10px] text-slate-500 mt-1 block">카테고리 추가/수정은 오른쪽 "카테고리 관리"에서 하세요.</span>
                 </div>
+
+                <!-- 🏷️ 상품 카드 뱃지 (사진 왼쪽 위에 붙는 딱지) -->
+                <div class="bg-slate-950/60 border border-slate-800 rounded-lg p-3 space-y-2.5">
+                  <label class="block text-slate-300 font-bold">🏷️ 상품 뱃지 <span class="text-[10px] text-slate-500 font-normal">— 상품 사진 왼쪽 위에 붙는 딱지</span></label>
+
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-2">
+                      <label class="block mb-1 text-slate-400 text-[11px] font-bold">뱃지 문구</label>
+                      <input type="text" id="admin-badge-text" oninput="renderBadgePreview()" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500" placeholder="비우면 자동 (30일 이용권 / MOQ 100개)">
+                    </div>
+                    <div>
+                      <label class="block mb-1 text-slate-400 text-[11px] font-bold">색상</label>
+                      <select id="admin-badge-color" onchange="renderBadgePreview()" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
+                        <option value="">자동</option>
+                        <option value="indigo">보라</option>
+                        <option value="sky">파랑</option>
+                        <option value="emerald">초록</option>
+                        <option value="rose">빨강</option>
+                        <option value="amber">주황</option>
+                        <option value="slate">검정</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-2">
+                      <label class="block mb-1 text-slate-400 text-[11px] font-bold">둘째 뱃지 <span class="text-slate-500 font-normal">(선택)</span></label>
+                      <input type="text" id="admin-badge2-text" oninput="renderBadgePreview()" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500" placeholder="예: 인기 / 신상품 / 할인">
+                    </div>
+                    <div>
+                      <label class="block mb-1 text-slate-400 text-[11px] font-bold">색상</label>
+                      <select id="admin-badge2-color" onchange="renderBadgePreview()" class="w-full p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
+                        <option value="rose">빨강</option>
+                        <option value="amber">주황</option>
+                        <option value="emerald">초록</option>
+                        <option value="sky">파랑</option>
+                        <option value="indigo">보라</option>
+                        <option value="slate">검정</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="text-[10px] text-slate-500 mb-1">미리보기</p>
+                    <div id="admin-badge-preview" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+                  </div>
+                </div>
                 <div id="admin-shipping-wrap">
                   <label class="block mb-1 text-slate-400 font-bold">🚚 배송 방식</label>
                   <select id="admin-shipping" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white focus:outline-none focus:border-sky-500">
@@ -4040,9 +4087,10 @@
           <div>
             <div class="aspect-square bg-slate-950 relative overflow-hidden">
               <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-              <span class="absolute top-3 left-3 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded border ${isDigital(p.type) ? 'border-indigo-400/40' : 'bg-slate-950/80 text-sky-400 border-slate-800'}" ${isDigital(p.type) ? 'style="background:rgba(79,70,229,.85);color:#fff;"' : ''}>
-                ${isDigital(p.type) ? typeBadge(p) : `MOQ ${p.moq}개`}
+              <span class="absolute top-3 left-3 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded border" style="${badgeStyle(p)}">
+                ${badgeText(p)}
               </span>
+              ${p.badge2Text ? `<span class="absolute left-3 backdrop-blur text-[10px] font-black px-2.5 py-1 rounded border" style="top:44px;${badge2Style(p)}">${p.badge2Text}</span>` : ''}
               ${p.videoUrl ? `
                 <span class="absolute top-3 right-3 bg-rose-500 text-white p-1.5 rounded-full shadow-lg">
                   <svg
@@ -4462,6 +4510,29 @@
     function isPass(t) { return t === 'pass' || t === 'passday'; }
     function isPassCount(t) { return t === 'pass'; }      // 횟수권
     function isPassDays(t) { return t === 'passday'; }    // 기간권
+    // --- 상품 카드 뱃지 (관리자가 문구·색을 직접 지정 가능) ---
+    // 색 프리셋: 관리자 셀렉트 값과 1:1 대응
+    const BADGE_COLORS = {
+      indigo: 'background:rgba(79,70,229,.9);color:#fff;border-color:rgba(129,140,248,.45);',
+      sky:    'background:rgba(2,132,199,.9);color:#fff;border-color:rgba(56,189,248,.45);',
+      emerald:'background:rgba(5,150,105,.9);color:#fff;border-color:rgba(52,211,153,.45);',
+      rose:   'background:rgba(225,29,72,.9);color:#fff;border-color:rgba(251,113,133,.45);',
+      amber:  'background:rgba(217,119,6,.92);color:#fff;border-color:rgba(251,191,36,.45);',
+      slate:  'background:rgba(2,6,23,.8);color:#38bdf8;border-color:#1e293b;'
+    };
+    // 뱃지 문구 — 사장님이 적어둔 게 있으면 그걸, 없으면 자동(이용권/구독/MOQ)
+    function badgeText(p) {
+      if (p.badgeText) return p.badgeText;
+      return isDigital(p.type) ? typeBadge(p) : `MOQ ${p.moq}개`;
+    }
+    function badgeStyle(p) {
+      if (p.badgeColor && BADGE_COLORS[p.badgeColor]) return BADGE_COLORS[p.badgeColor];
+      return isDigital(p.type) ? BADGE_COLORS.indigo : BADGE_COLORS.slate;
+    }
+    function badge2Style(p) {
+      return BADGE_COLORS[p.badge2Color] || BADGE_COLORS.rose;
+    }
+
     // 뱃지에 실제 값을 넣어줌 — "30일 이용권" / "10회 이용권"
     function typeBadge(p) {
       const t = (p && p.type) || p;                  // 상품 객체 또는 유형 문자열 둘 다 받음
@@ -4615,6 +4686,30 @@
       document.getElementById('program-expire').innerText = stateText;
       document.getElementById('program-frame').src = src;
       navigate('program');
+    }
+
+    // 관리자 폼에서 뱃지가 어떻게 보일지 즉시 미리보기
+    function renderBadgePreview() {
+      const box = document.getElementById('admin-badge-preview');
+      if (!box) return;
+      const t1 = (document.getElementById('admin-badge-text') || {}).value || '';
+      const c1 = (document.getElementById('admin-badge-color') || {}).value || '';
+      const t2 = (document.getElementById('admin-badge2-text') || {}).value || '';
+      const c2 = (document.getElementById('admin-badge2-color') || {}).value || 'rose';
+      const type = (document.getElementById('admin-type') || {}).value || 'normal';
+      const moq = (document.getElementById('admin-moq') || {}).value || 0;
+      // 문구를 비웠을 때 자동으로 뭐가 붙는지도 그대로 보여줌
+      const fake = {
+        type,
+        moq,
+        paidUses: parseInt((document.getElementById('admin-paid-uses') || {}).value, 10) || 0,
+        validDays: parseInt((document.getElementById('admin-valid-days') || {}).value, 10) || 0,
+        badgeText: t1, badgeColor: c1
+      };
+      const base = 'display:inline-block;font-size:10px;font-weight:900;padding:4px 10px;border-radius:6px;border:1px solid;';
+      let html = `<span style="${base}${badgeStyle(fake)}">${badgeText(fake) || '(없음)'}</span>`;
+      if (t2) html += `<span style="${base}${BADGE_COLORS[c2] || BADGE_COLORS.rose}">${t2}</span>`;
+      box.innerHTML = html;
     }
 
     // --- 무료 체험 종료 → 구매 유도 팝업 ---
@@ -5521,6 +5616,7 @@
       if (nameLabel) nameLabel.textContent = isSub ? '프로그램 / 서비스명' : '완충재 완제품명';
       // 유형이 바뀌면 이용 조건 칸(횟수/기간)도 그에 맞게 다시 그림
       if (typeof onAccessModeChange === 'function') onAccessModeChange();
+      if (typeof renderBadgePreview === 'function') renderBadgePreview();
     }
 
     function editProduct(id) {
@@ -5542,6 +5638,12 @@
         if (pu2) pu2.value = p.paidUses || 0;
         const vd = document.getElementById('admin-valid-days');
         if (vd) vd.value = (p.validDays === undefined || p.validDays === null) ? 30 : p.validDays;
+        // 뱃지
+        const bt = document.getElementById('admin-badge-text');   if (bt) bt.value = p.badgeText || '';
+        const bc = document.getElementById('admin-badge-color');  if (bc) bc.value = p.badgeColor || '';
+        const b2t = document.getElementById('admin-badge2-text'); if (b2t) b2t.value = p.badge2Text || '';
+        const b2c = document.getElementById('admin-badge2-color');if (b2c) b2c.value = p.badge2Color || 'rose';
+        if (typeof renderBadgePreview === 'function') renderBadgePreview();
         onAccessModeChange();
       }
       // 이미 올린 프로그램 파일이 있으면 표시 (새로 안 올리면 유지됨)
@@ -6474,6 +6576,11 @@
         ? Math.max(1, parseInt(document.getElementById('admin-trial-uses').value, 10) || 3)
         : 0;
       // 구독자가 쓸 수 있는 횟수 (0 = 기간 내 무제한)
+      // 상품 카드 뱃지 (비우면 자동 문구가 붙음)
+      const badgeTextV   = document.getElementById('admin-badge-text').value.trim();
+      const badgeColorV  = document.getElementById('admin-badge-color').value;
+      const badge2TextV  = document.getElementById('admin-badge2-text').value.trim();
+      const badge2ColorV = document.getElementById('admin-badge2-color').value;
       // 횟수권은 횟수만, 기간권은 기간만 저장 (반대쪽은 0 = 제한 없음)
       const rawUses = Math.max(0, parseInt(document.getElementById('admin-paid-uses').value, 10) || 0);
       const rawDays = Math.max(0, parseInt(document.getElementById('admin-valid-days').value, 10) || 0);
@@ -6492,6 +6599,8 @@
           p.name = name; p.price = price; p.moq = moq; p.description = desc; p.category = category;
           p.type = type; p.programUrl = programUrl; p.programNote = programNote; p.shipping = shipping;
           p.accessMode = accessMode; p.trialUses = trialUses; p.paidUses = paidUses; p.validDays = validDays;
+          p.badgeText = badgeTextV; p.badgeColor = badgeColorV;
+          p.badge2Text = badge2TextV; p.badge2Color = badge2ColorV;
           // 새 파일을 올렸을 때만 교체 (안 올리면 기존 파일 유지)
           if (programFile) { p.programFile = programFile; p.programFileName = programFileName; }
           if (newImages.length) p.images = newImages;              // 새 이미지 있을 때만 교체
@@ -6514,6 +6623,8 @@
           id: Date.now(), name, price, moq, category,
           type, programUrl, programNote, shipping, programFile, programFileName,
           accessMode, trialUses, paidUses, validDays,
+          badgeText: badgeTextV, badgeColor: badgeColorV,
+          badge2Text: badge2TextV, badge2Color: badge2ColorV,
           images: imagesArray,
           videoUrl: newVideo,
           description: desc,
