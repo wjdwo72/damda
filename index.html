@@ -152,11 +152,13 @@
       </div>
 
       <!-- 내비게이션 링크들 -->
-      <nav class="hidden md:flex items-center gap-5 text-sm font-semibold text-slate-300" style="white-space:nowrap;">
+      <nav class="hidden md:flex items-center text-sm font-semibold text-slate-300" style="white-space:nowrap;gap:26px;">
         <a href="#" onclick="navigate('home')" class="hover:text-sky-400 transition-colors" data-i18n="nav_home">홈페이지 메인</a>
-        <a href="#" onclick="openBulkInquiryModal()" class="hover:text-sky-400 transition-colors flex items-center gap-1 text-sky-400">
+        <span aria-hidden="true" style="color:#334155;">|</span>
+        <a href="#" onclick="openBulkInquiryModal()" class="hover:text-sky-400 transition-colors text-sky-400" style="display:flex;align-items:center;gap:5px;">
           <svg
-  class="lucide w-4 h-4 lucide-message-square"
+  class="lucide lucide-message-square"
+  style="width:16px;height:16px;flex-shrink:0;"
   xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
@@ -168,10 +170,12 @@
   stroke-linejoin="round"
 >
   <path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />
-</svg> <span data-i18n="nav_bulk">대량 견적 문의 (B2B)</span>
+</svg><span data-i18n="nav_bulk">대량 견적 문의 (B2B)</span>
         </a>
+        <span aria-hidden="true" style="color:#334155;">|</span>
         <a href="#" onclick="navigate('home'); scrollToSection('products-section')" class="hover:text-sky-400 transition-colors" data-i18n="nav_products">상품목록</a>
-        <a href="#" onclick="openCustomInquiryModal()" class="hover:text-indigo-300 transition-colors flex items-center gap-1 text-indigo-300">🔧 <span>없는 제품 문의</span></a>
+        <span aria-hidden="true" style="color:#334155;">|</span>
+        <a href="#" onclick="openCustomInquiryModal()" class="hover:text-indigo-300 transition-colors text-indigo-300" style="display:flex;align-items:center;gap:5px;">🔧 <span>없는 제품 문의</span></a>
       </nav>
 
       <!-- 우측 유틸리티 영역 (언어 선택, 로그인, 장바구니, 숨김 관리자) -->
@@ -497,7 +501,7 @@
           <h3 class="text-2xl font-black text-white tracking-tight flex items-center gap-2" id="banner-heading">📢 함께 보면 좋은 서비스</h3>
           <p class="text-xs text-slate-400 mt-1" id="banner-subheading">담다가 소개하는 파트너 서비스입니다.</p>
         </div>
-        <div id="banner-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        <div id="banner-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;max-width:620px;"></div>
       </section>
     </div>
 
