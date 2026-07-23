@@ -34,6 +34,27 @@
   </script>
 
   <!-- ============================================================
+       💳 결제 설정 — KG이니시스 카드결제 스위치 (기초 작업 완료, 승인 대기)
+       inicisEnabled : false = 카드결제 '준비중'(무통장입금만 받음)  ← 지금 상태
+                       true  = 카드결제 켜짐 (KG이니시스 승인 + 결제서버 둘 다 있어야 함)
+       inicisMid     : KG이니시스 상점아이디(MID). 공개값이라 소스에 있어도 안전함.
+       payServerUrl  : 결제 승인 서버 주소 (예: https://xxx.up.railway.app)
+
+       ⚠️ 카드결제는 서버가 반드시 필요합니다.
+          결제창 → 이니시스가 서버로 결과 전송 → 서버가 '시크릿키'로 승인요청 → 확정.
+          시크릿키(signKey)는 절대 이 파일에 넣지 마세요. 소스가 공개되어 누구나 봅니다.
+          서버(Railway 등)를 붙인 뒤 위 세 값을 채우고 enabled를 true로 바꾸면 됩니다.
+          ※ 관리자 「💳 카드결제 설정」에서 켜면 서버에 저장되어 방문자 전체에 적용됩니다.
+       ============================================================ -->
+  <script>
+    window.PAY_CONFIG_DEFAULT = {
+      inicisEnabled: false,
+      inicisMid: '',
+      payServerUrl: ''
+    };
+  </script>
+
+  <!-- ============================================================
        📦 배포용 시드 데이터 (방문자에게 보일 상품·로고·문구)
        관리자 → 「📦 배포용 내보내기」로 받은 damda-seed.json 내용을
        아래 = 오른쪽에 통째로 붙여넣으면, 저장 데이터가 없는 방문자에게도
@@ -1725,6 +1746,36 @@
             <textarea id="ce-bank-info" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-xs h-20" placeholder="예) 국민은행 123456-01-789012 (예금주: 콘마아이엠시)"></textarea>
             <button type="button" onclick="saveBankInfo()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 rounded-lg transition text-sm">계좌 안내 저장</button>
           </div>
+
+          <!-- 💳 카드결제 (KG이니시스) — 승인 전이라 꺼둠 -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3">
+            <h3 class="font-bold text-base text-white flex items-center gap-2">💳 카드결제 설정 (KG이니시스)</h3>
+            <p id="pay-inicis-status" style="font-size:12px;font-weight:700;color:#fbbf24;">🟡 <b>준비중</b> — 지금은 <b>무통장입금만</b> 받습니다.</p>
+
+            <div style="background:#0b1220;border:1px solid #1e293b;border-radius:10px;padding:12px;font-size:11px;color:#94a3b8;line-height:1.8;">
+              <b style="color:#e2e8f0;">켜기 전에 두 가지가 필요합니다</b><br>
+              ① <b style="color:#cbd5e1;">KG이니시스 가맹점 승인</b> (사업자등록증·통장사본 심사, 보통 3~7일)<br>
+              ② <b style="color:#cbd5e1;">결제 승인 서버</b> — 카드결제는 서버가 시크릿키로 승인해야 확정됩니다.
+              깃허브 무료 서버로는 안 되고, 사장님 <b style="color:#cbd5e1;">Railway</b>에 붙이면 됩니다.<br>
+              <span style="color:#f87171;">⚠️ 시크릿키(signKey)는 절대 여기 넣지 마세요 — 소스가 공개되어 누구나 봅니다. 서버에만 둡니다.</span>
+            </div>
+
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1">상점아이디 (MID) <span class="text-slate-500">— 이니시스가 승인 후 발급</span></label>
+              <input type="text" id="pay-inicis-mid" placeholder="예: damdaXXXX" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
+            </div>
+            <div>
+              <label class="text-[11px] font-bold text-slate-300 block mb-1">결제 서버 주소 <span class="text-slate-500">— 예: https://xxx.up.railway.app</span></label>
+              <input type="text" id="pay-server-url" placeholder="https://xxx.up.railway.app" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500">
+            </div>
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer" style="padding:10px;background:#0b1220;border:1px solid #1e293b;border-radius:8px;">
+              <input type="checkbox" id="pay-inicis-enabled" class="w-4 h-4 accent-sky-500">
+              카드결제 켜기 <span class="text-slate-500 font-normal">(위 두 칸을 채워야 실제로 켜집니다)</span>
+            </label>
+
+            <button type="button" onclick="savePayConfig()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 rounded-lg transition text-sm">결제 설정 저장</button>
+            <p class="text-[10px] text-slate-500">저장하면 서버에도 올라가서 <b class="text-slate-400">방문자 전체에 바로 적용</b>됩니다. (파일 재업로드 불필요)</p>
+          </div>
         </div>
 
         <!-- TAB: 알림 발송 설정 (텔레그램/카카오톡 지정) -->
@@ -2552,6 +2603,11 @@
         if (typeof bi !== 'string' && typeof SEED.bankInfo === 'string') bi = SEED.bankInfo;   // 방문자 → 시드
         if (typeof bi === 'string') { bankInfo = bi; }
         if (typeof applyBankInfo === 'function') applyBankInfo();
+        // 5.52) 결제 설정 (KG이니시스) — 저장값 > 시드 > 파일 기본값 순
+        const pc = await idbGet('pay_config');
+        if (pc && typeof pc === 'object') payConfig = Object.assign(payConfig, pc);
+        else if (SEED.payConfig && typeof SEED.payConfig === 'object') payConfig = Object.assign(payConfig, SEED.payConfig);
+        if (typeof applyPayConfig === 'function') applyPayConfig();
         // 5.5x) 로그인 사용자 복원 (마이페이지)
         const cu = await idbGet('current_user');
         if (cu && cu.contact) { currentUser = cu; }
@@ -2967,7 +3023,8 @@
         _생성일시: new Date().toLocaleString('ko-KR'),
         products, categories, banners,
         logo: logoDataUrl || '',
-        featureImages, heroMedia, siteContent, themeColors, bankInfo
+        featureImages, heroMedia, siteContent, themeColors, bankInfo,
+        payConfig
       };
       if (!!(document.getElementById('export-with-admin') || {}).checked) {
         // 관리자 아이디/비번을 시드에 넣으면 올린 사이트에서도 같은 값으로 들어갈 수 있음.
@@ -4782,7 +4839,9 @@
         datetime: new Date().toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'medium' }),   // 초 단위까지
         items: `${cart[0].product.name} ${cart.length > 1 ? `외 ${cart.length - 1}건` : ''}`,
         total: totalCartPrice,
-        status: payMethod === '무통장입금' ? '입금 대기' : '결제 완료',
+        // ⚠️ 카드결제는 결제서버가 승인을 확인해줘야 '결제 완료'로 바꿀 수 있음.
+        //    승인 전에 '결제 완료'로 두면 돈 안 낸 주문이 완료로 보임 → 반드시 '결제 대기'로 시작.
+        status: payMethod === '무통장입금' ? '입금 대기' : '결제 대기',
         payMethod: payMethod,
         delivery: delivery,
         isSubscription: allSub,
@@ -4876,7 +4935,10 @@
       } else if (payMethod === '무통장입금') {
         showToast(`🏦 주문이 접수되었습니다! (${payMethod})\n안내된 계좌로 입금해주시면 확인 후 발송됩니다.\n주문번호: ${orderId}`);
       } else {
-        showToast(`🎉 [${payMethod}] 결제가 완료되었습니다!\n"${name}" 고객님 주문(${orderId})이 정상 접수되었습니다.`);
+        // 💳 카드/간편결제 — 주문을 '결제 대기'로 남긴 뒤 이니시스 결제창으로 넘김.
+        //    실제 '결제 완료' 처리는 결제서버가 승인 결과를 확인한 뒤에 해야 함.
+        showToast(`💳 결제창으로 이동합니다.\n주문번호: ${orderId}`);
+        startInicisPay(newOrder);
       }
     }
 
@@ -4928,6 +4990,96 @@
       shopPublishSoon();
       applyBankInfo();
       showToast(ok ? '🏦 무통장입금 계좌 안내가 저장되었습니다.' : '저장에 실패했습니다(브라우저 저장소 제한).');
+    }
+
+    // ============================================================
+    // 💳 결제 설정 (KG이니시스) — 기초 작업. 승인+서버 준비되면 켜기만 하면 됨.
+    // ============================================================
+    let payConfig = Object.assign({ inicisEnabled: false, inicisMid: '', payServerUrl: '' },
+                                  window.PAY_CONFIG_DEFAULT || {});
+
+    // 결제수단 라디오를 설정에 맞춰 켜고 끔 (꺼져 있으면 무통장입금만 선택 가능)
+    function applyPayConfig() {
+      const on = !!(payConfig.inicisEnabled && payConfig.inicisMid && payConfig.payServerUrl);
+      document.querySelectorAll('input[name="pay-method"]').forEach(r => {
+        if (r.value === '무통장입금') return;              // 무통장은 항상 켜둠
+        const label = r.closest('label');
+        const badge = label ? label.querySelector('span') : null;
+        r.disabled = !on;
+        if (label) {
+          label.style.opacity = on ? '1' : '.5';
+          label.style.cursor  = on ? 'pointer' : 'not-allowed';
+          label.style.borderColor = on ? '#0ea5e9' : '';
+        }
+        if (badge) badge.textContent = on ? '' : '(준비중)';
+      });
+      if (!on) {   // 꺼져 있으면 무통장입금이 반드시 선택돼 있도록
+        const bank = document.querySelector('input[name="pay-method"][value="무통장입금"]');
+        if (bank) bank.checked = true;
+      }
+      // 관리자 화면 상태 표시
+      const st = document.getElementById('pay-inicis-status');
+      if (st) {
+        st.innerHTML = on
+          ? '🟢 <b>카드결제 사용중</b> — 손님이 카드/간편결제를 고를 수 있습니다.'
+          : '🟡 <b>준비중</b> — 지금은 <b>무통장입금만</b> 받습니다. (KG이니시스 승인 + 결제서버가 있어야 켜집니다)';
+        st.style.color = on ? '#34d399' : '#fbbf24';
+      }
+      const en = document.getElementById('pay-inicis-enabled');
+      const mid = document.getElementById('pay-inicis-mid');
+      const url = document.getElementById('pay-server-url');
+      if (en && document.activeElement !== en) en.checked = !!payConfig.inicisEnabled;
+      if (mid && !mid.value) mid.value = payConfig.inicisMid || '';
+      if (url && !url.value) url.value = payConfig.payServerUrl || '';
+      if (typeof onPaymentMethodChange === 'function') onPaymentMethodChange();
+    }
+
+    async function savePayConfig() {
+      const en = document.getElementById('pay-inicis-enabled');
+      const mid = document.getElementById('pay-inicis-mid');
+      const url = document.getElementById('pay-server-url');
+      payConfig = {
+        inicisEnabled: en ? en.checked : false,
+        inicisMid: mid ? mid.value.trim() : '',
+        payServerUrl: url ? url.value.trim().replace(/\/+$/, '') : ''
+      };
+      if (payConfig.inicisEnabled && (!payConfig.inicisMid || !payConfig.payServerUrl)) {
+        showToast('⚠️ 카드결제를 켜려면 상점아이디(MID)와 결제서버 주소가 둘 다 필요합니다.');
+      }
+      await idbSet('pay_config', payConfig);
+      shopPublishSoon();          // 서버에 올려서 방문자 전체에 적용
+      applyPayConfig();
+      addLog("SYSTEM", `결제 설정 저장: 카드결제 ${payConfig.inicisEnabled ? 'ON' : 'OFF'}`);
+      showToast('💳 결제 설정이 저장되었습니다.');
+    }
+
+    // 카드결제 시작 — 설정이 완전히 갖춰졌을 때만 동작함.
+    // ⚠️ 실제 승인은 결제서버가 시크릿키로 처리해야 함. 이 함수는 결제창을 띄우는 데까지만 담당.
+    function startInicisPay(order) {
+      const on = !!(payConfig.inicisEnabled && payConfig.inicisMid && payConfig.payServerUrl);
+      if (!on) {
+        showToast('카드결제는 아직 준비중입니다. 무통장입금으로 주문해주세요.');
+        return false;
+      }
+      // 결제서버가 주문정보를 받아 이니시스 결제창으로 넘겨주는 방식(시크릿키는 서버에만 있음)
+      const f = document.createElement('form');
+      f.method = 'POST';
+      f.action = payConfig.payServerUrl + '/pay/inicis/start';
+      f.style.display = 'none';
+      const put = (k, v) => {
+        const i = document.createElement('input');
+        i.type = 'hidden'; i.name = k; i.value = v == null ? '' : String(v);
+        f.appendChild(i);
+      };
+      put('mid', payConfig.inicisMid);
+      put('orderId', order.id);
+      put('amount', order.total);
+      put('goodsName', order.items);
+      put('buyerName', order.customer);
+      put('buyerTel', order.phone);
+      document.body.appendChild(f);
+      f.submit();
+      return true;
     }
 
     // --- 매출 통계: 실제 주문(orders) 데이터에서 계산 (주문 삭제하면 즉시 반영됨) ---
@@ -5223,7 +5375,9 @@
         const fitted = await Promise.all(products.map(fitProductForServer));
         const snap = await FB.getDocs(FB.collection(FB.db, 'shop_products'));
         const 기존 = new Set(snap.docs.map(d => d.id));
-        for (const p of fitted) {
+        // _order = 관리자가 정한 순서. 이걸 안 넣으면 다시 읽을 때 문서ID 순으로 섞임.
+        for (let i = 0; i < fitted.length; i++) {
+          const p = Object.assign({}, fitted[i], { _order: i });
           await FB.setDoc(FB.doc(FB.db, 'shop_products', String(p.id)), p);
           기존.delete(String(p.id));
         }
@@ -5233,7 +5387,8 @@
         // 2) 배너 — 사진이 여러 장이라 커질 수 있어 상품처럼 1개당 문서 1개로 나눠 담음
         const bsnap = await FB.getDocs(FB.collection(FB.db, 'shop_banners'));
         const b기존 = new Set(bsnap.docs.map(d => d.id));
-        for (const b of banners) {
+        for (let i = 0; i < banners.length; i++) {
+          const b = Object.assign({}, banners[i], { _order: i });
           await FB.setDoc(FB.doc(FB.db, 'shop_banners', String(b.id)), b);
           b기존.delete(String(b.id));
         }
@@ -5243,6 +5398,7 @@
         await FB.setDoc(FB.doc(FB.db, 'shop', 'config'), {
           categories, featureImages, siteContent, themeColors,
           bankInfo: bankInfo || '',
+          payConfig: payConfig || {},
           logo: logoDataUrl || '',
           heroMedia: (heroMedia || []).filter(m => !String(m.url || '').startsWith('data:video')),
           updatedAt: FB.serverTimestamp()
@@ -5273,13 +5429,16 @@
         const banSnap = await FB.getDocs(FB.collection(FB.db, 'shop_banners'));
         if (!cfgSnap.exists() && prodSnap.empty && banSnap.empty) return false;   // 아직 아무것도 안 올림
 
+        // 관리자가 정한 순서(_order)대로 정렬. 없으면(옛 데이터) 뒤로 보냄.
+        const byOrder = (a, b) => (a._order == null ? 9999 : a._order) - (b._order == null ? 9999 : b._order);
+
         if (!prodSnap.empty) {
-          products = prodSnap.docs.map(d => d.data());
+          products = prodSnap.docs.map(d => d.data()).sort(byOrder);
           idbSet('products', products);
           renderProducts(); if (typeof renderAdminProducts === 'function') renderAdminProducts();
         }
         // 배너 (서버에 하나라도 있으면 그걸로 교체)
-        banners = banSnap.docs.map(d => d.data());
+        banners = banSnap.docs.map(d => d.data()).sort(byOrder);
         idbSet('banners', banners); renderBanners(); if (typeof renderAdminBanners === 'function') renderAdminBanners();
         if (cfgSnap.exists()) {
           const c = cfgSnap.data();
@@ -5287,6 +5446,7 @@
           if (Array.isArray(c.featureImages)) { featureImages = c.featureImages; idbSet('feature_images', featureImages); applyFeatureImages(); }
           if (typeof c.logo === 'string' && c.logo) { logoDataUrl = c.logo; idbSet('logo', c.logo); applyLogo(); }
           if (typeof c.bankInfo === 'string') { bankInfo = c.bankInfo; idbSet('bank_info', bankInfo); if (typeof applyBankInfo === 'function') applyBankInfo(); }
+          if (c.payConfig && typeof c.payConfig === 'object') { payConfig = Object.assign(payConfig, c.payConfig); idbSet('pay_config', payConfig); if (typeof applyPayConfig === 'function') applyPayConfig(); }
           if (c.siteContent && typeof c.siteContent === 'object') {
             Object.keys(c.siteContent).forEach(lg => { if (siteContent[lg]) siteContent[lg] = Object.assign({}, siteContent[lg], c.siteContent[lg]); });
             idbSet('site_content', c.siteContent);
