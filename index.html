@@ -4416,10 +4416,15 @@
 
       if (!granted) return false;
       saveSubscriptions();
-      // 이 회원을 '유료·활성'으로도 올려둠 → 상품 페이지의 사용 버튼이 확실히 뜨게
+      // 이 회원의 결제상태를 올려둠 → 상품 페이지의 사용 버튼이 확실히 뜨게
+      // 쿠폰으로 받은 거면 '쿠폰', 그 외(관리자 지급 등)는 '활성'
       const mem = members.find(x => x.contact === 대상연락처);
-      if (mem) { mem.grade = '유료'; mem.payStatus = '활성'; persistMembers(); renderMembers && renderMembers(); }
-      order.status = '결제 완료';
+      if (mem) {
+        mem.grade = '유료';
+        mem.payStatus = (reason === '쿠폰') ? '쿠폰' : '활성';
+        persistMembers(); renderMembers && renderMembers();
+      }
+      order.status = (reason === '쿠폰') ? '쿠폰' : '결제 완료';   // 유통상태 표시
       saveOrders();
       if (typeof renderAdminOrders === 'function') renderAdminOrders();
       if (typeof renderMyPage === 'function') renderMyPage();
@@ -4709,8 +4714,8 @@
       if (isAdminAuthed) return true;    // 관리자 진입(구글·비번 무관) → 항상 사용 가능
       if (currentUser && isOwnerEmail(currentUser.contact)) return true;
       const m = currentMember();
-      // 등급이 '유료' 이거나 결제상태가 '활성' 이면 사용 가능 (둘 중 하나만 맞아도)
-      return !!(m && (m.grade === '유료' || m.payStatus === '활성'));
+      // 등급이 '유료' 이거나 결제상태가 '활성'/'쿠폰' 이면 사용 가능
+      return !!(m && (m.grade === '유료' || m.payStatus === '활성' || m.payStatus === '쿠폰'));
     }
 
     function openProgram(productId) {
@@ -5518,7 +5523,9 @@
       // 💳 결제금액이 0원이면(무료 쿠폰 등) 입금 확인할 게 없으므로 바로 사용 권한을 줌.
       //    안 그러면 0원인데도 사장님이 입장코드를 발급해줄 때까지 손님이 못 씁니다.
       if (totalCartPrice === 0 && allSub && currentUser) {
-        grantDigitalAccess(newOrder, '무료쿠폰');
+        const via = usedCouponCode ? '쿠폰' : '무료';
+        if (usedCouponCode) newOrder.status = '쿠폰';   // 유통상태에 '쿠폰' 표시
+        grantDigitalAccess(newOrder, via);              // 상품의 기간·횟수를 그대로 부여
       }
 
       // 쿠폰 사용 처리 (1회용)
@@ -5987,6 +5994,14 @@
       return o.date || '-';
     }
 
+    // 주문 유통상태 뱃지 색
+    function orderStatusStyle(st) {
+      if (st === '쿠폰') return 'background:rgba(168,85,247,.12);color:#c084fc;border-color:rgba(168,85,247,.3);';
+      if (st === '입금 대기' || st === '결제 대기') return 'background:rgba(245,158,11,.1);color:#fbbf24;border-color:rgba(245,158,11,.25);';
+      if (st === '결제 완료') return 'background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.25);';
+      return 'background:rgba(56,189,248,.1);color:#38bdf8;border-color:rgba(56,189,248,.2);';
+    }
+
     function renderAdminOrders() {
       const tbody = document.getElementById('admin-orders-tbody');
       tbody.innerHTML = orders.map(o => `
@@ -5999,7 +6014,7 @@
           <td class="p-3 font-extrabold text-sky-400">${(o.total || 0).toLocaleString()}원</td>
           <td class="p-3 text-slate-400">${o.delivery || '-'}</td>
           <td class="p-3">
-            <span class="inline-block bg-sky-500/10 text-sky-400 px-2.5 py-0.5 rounded border border-sky-500/20 font-bold">${o.status}</span>
+            <span class="inline-block px-2.5 py-0.5 rounded border font-bold" style="${orderStatusStyle(o.status)}">${o.status}</span>
           </td>
           <td class="p-3">
             <div class="flex gap-1">
@@ -6470,8 +6485,15 @@
     function renderMembers() {
       const tbody = document.getElementById('admin-members-tbody');
       if (!tbody) return;
+      // 같은 연락처가 여러 번 들어와도 한 명만 보이게 (서버 동기화로 생긴 중복 정리)
+      const seen = new Set();
+      const uniq = members.filter(m => {
+        const k = (m.contact || '') + '';
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      });
       const q = ((document.getElementById('member-search') || {}).value || '').trim().toLowerCase();
-      const list = members.filter(m => !q
+      const list = uniq.filter(m => !q
         || (m.name || '').toLowerCase().includes(q)
         || (m.contact || '').toLowerCase().includes(q));
 
@@ -6482,9 +6504,10 @@
           <option ${g === '무료' ? 'selected' : ''}>무료</option></select>`;
       };
       const paySel = (m) => {
-        const p = m.payStatus === '활성' ? '활성' : '없음';
+        const p = ['활성', '쿠폰', '없음'].includes(m.payStatus) ? m.payStatus : '없음';
         return `<select onchange="saveMemberField(${m.id},'payStatus',this.value)" class="bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-white text-[11px]">
           <option ${p === '활성' ? 'selected' : ''}>활성</option>
+          <option ${p === '쿠폰' ? 'selected' : ''}>쿠폰</option>
           <option ${p === '없음' ? 'selected' : ''}>없음</option></select>`;
       };
       const tele = (m) => m.telegramId
