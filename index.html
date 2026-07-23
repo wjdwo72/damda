@@ -662,6 +662,15 @@
               <!-- 무료 / 무료체험 / 구독중이면 여기서 바로 실행 -->
               <button id="detail-try-btn" class="hidden w-full py-3 rounded-lg font-black text-sm mt-1" style="background:#4f46e5;color:#fff;border:none;cursor:pointer;">▶ 지금 바로 사용해보기</button>
               <p id="detail-try-note" class="hidden text-[10px] text-center" style="color:#fbbf24;"></p>
+
+              <!-- 🎟️ 쿠폰 코드로 바로 사용 (장바구니 없이) -->
+              <div id="detail-coupon-box" class="hidden mt-2 pt-2" style="border-top:1px dashed rgba(148,163,184,.25);">
+                <p class="text-[10px] text-slate-400 mb-1">🎟️ 쿠폰 코드가 있으면 장바구니 없이 바로 사용하세요</p>
+                <div style="display:flex;gap:6px;">
+                  <input type="text" id="detail-coupon-input" placeholder="쿠폰 코드 입력 (예: DAMDA-XXXX)" class="flex-1 p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-indigo-500" style="text-transform:uppercase;">
+                  <button onclick="redeemCouponHere()" class="px-4 rounded font-bold text-xs" style="background:#7c3aed;color:#fff;border:none;cursor:pointer;white-space:nowrap;">등록</button>
+                </div>
+              </div>
             </div>
 
             <!-- 주문 및 수량 기입 제어 모듈 (구독 상품이면 숨김 — 월 1개월 단위 정기구독) -->
@@ -4702,6 +4711,48 @@
       return Math.max(0, limit - programUsedCount(p.id));
     }
 
+    // 🎟️ 상품 페이지에서 쿠폰 코드로 바로 사용 (장바구니·주문서 없이)
+    function redeemCouponHere() {
+      if (!selectedProduct) return;
+      if (!currentUser) { showToast('로그인 후 쿠폰을 등록할 수 있습니다.'); openLoginModal(); return; }
+      const input = document.getElementById('detail-coupon-input');
+      const code = (input && input.value || '').trim().toUpperCase();
+      if (!code) { showToast('쿠폰 코드를 입력해주세요.'); return; }
+      const c = coupons.find(x => (x.code || '').toUpperCase() === code);
+      if (!c) { showToast('❌ 존재하지 않는 쿠폰입니다.'); return; }
+      if (c.used) { showToast('❌ 이미 사용된 쿠폰입니다.'); return; }
+      // 구독 전용 쿠폰인데 일반 상품이면 거부
+      if (c.target === 'subscription' && !isDigital(selectedProduct.type)) {
+        showToast('이 쿠폰은 프로그램(구독·이용권) 상품에만 쓸 수 있습니다.'); return;
+      }
+      // 100% 무료 쿠폰만 "바로 사용"이 됩니다. 할인 쿠폰은 결제가 필요합니다.
+      if (c.kind !== 'free') {
+        showToast('이 쿠폰은 할인 쿠폰이라 주문서에서 결제와 함께 사용해주세요.'); return;
+      }
+      // 가짜 주문을 만들어 권한 부여 (상품의 기간·횟수 그대로)
+      const orderId = `CP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const order = {
+        id: orderId, customer: currentUser.name,
+        date: new Date().toISOString().split('T')[0],
+        datetime: new Date().toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'medium' }),
+        items: selectedProduct.name, total: 0, status: '쿠폰',
+        payMethod: '쿠폰', delivery: '구독(디지털 · 배송없음)', isSubscription: true,
+        phone: '', address: '(구독 상품 · 배송 없음)',
+        memberContact: currentUser.contact,
+        cartSnapshot: [{ productId: selectedProduct.id, name: selectedProduct.name, type: selectedProduct.type || 'normal', qty: 1 }],
+        couponCode: code
+      };
+      orders.unshift(order); saveOrders(); fbAdd('orders', order);
+      c.used = true; c.usedBy = currentUser.name; c.usedAt = order.date;
+      saveCoupons(); if (typeof renderCoupons === 'function') renderCoupons();
+
+      if (grantDigitalAccess(order, '쿠폰')) {
+        if (input) input.value = '';
+        addLog("SYSTEM", `쿠폰 바로 사용: ${code} (${currentUser.name}) → ${selectedProduct.name}`);
+        renderDetail();     // 버튼을 '사용하기'로 새로 그림
+      }
+    }
+
     // 지금 로그인한 사람의 회원 정보
     function currentMember() {
       if (!currentUser) return null;
@@ -5070,6 +5121,12 @@
       // ▶ 바로 사용 버튼 — 완전무료 / 체험 남음 / 구독중일 때만 보임
       const tryBtn = document.getElementById('detail-try-btn');
       const tryNote = document.getElementById('detail-try-note');
+      // 🎟️ 쿠폰 등록칸 — 프로그램 상품이고 아직 사용권한이 없을 때만 보여줌
+      const couponBox = document.getElementById('detail-coupon-box');
+      if (couponBox) {
+        const canUseNow = isSub && (isPaidMember() || activeSubFor(selectedProduct.id));
+        couponBox.classList.toggle('hidden', !(isSub && !canUseNow));
+      }
       if (tryBtn && tryNote) {
         tryBtn.classList.add('hidden'); tryNote.classList.add('hidden');
         if (isSub) {
