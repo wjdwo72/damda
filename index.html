@@ -4379,7 +4379,11 @@
     // 입장코드 없이 바로 사용 권한을 주는 경로 (0원 주문 / 사장님 수동 지급).
     // 상품에 지정한 기간(validDays)·횟수(paidUses)를 그대로 적용합니다.
     function grantDigitalAccess(order, reason) {
-      if (!currentUser || !order) return false;
+      if (!order) return false;
+      // 권한은 "주문한 사람"에게 줍니다 (관리자가 눌러도 손님 계정으로 들어감)
+      const 대상연락처 = order.memberContact || order.phone || (currentUser && currentUser.contact);
+      const 대상이름 = order.customer || (currentUser && currentUser.name) || '고객';
+      if (!대상연락처) { showToast('주문에 연락처가 없어 지급할 수 없습니다.'); return false; }
       const items = (order.cartSnapshot || []).filter(i => isDigital(i.type));
       if (!items.length) return false;
       const start = new Date().toISOString().split('T')[0];
@@ -4390,14 +4394,14 @@
         if (!p) return;
         const days = (p.validDays === undefined || p.validDays === null) ? 30 : Math.max(0, parseInt(p.validDays, 10) || 0);
         const expires = days > 0 ? addDays(start, days) : '';     // '' = 기간 무제한
-        const exist = subscriptions.find(s => s.memberContact === currentUser.contact && String(s.productId) === String(p.id));
+        const exist = subscriptions.find(s => s.memberContact === 대상연락처 && String(s.productId) === String(p.id));
         if (exist) {
           const base = (exist.expiresAt && exist.expiresAt > start) ? exist.expiresAt : start;
           exist.expiresAt = days > 0 ? addDays(base, days) : '';
           exist.used = 0;                                          // 재구매 → 횟수 새로 채움
         } else {
           subscriptions.push({
-            memberContact: currentUser.contact, memberName: currentUser.name,
+            memberContact: 대상연락처, memberName: 대상이름,
             productId: p.id, productName: p.name,
             startAt: start, expiresAt: expires, code: '(' + (reason || '자동지급') + ')',
             used: 0
@@ -4412,8 +4416,11 @@
       saveOrders();
       if (typeof renderAdminOrders === 'function') renderAdminOrders();
       if (typeof renderMyPage === 'function') renderMyPage();
-      addLog("SYSTEM", `사용 권한 자동 지급(${reason || '자동'}): ${currentUser.name} — 주문 ${order.id}`);
-      showToast('🎉 바로 사용하실 수 있습니다! 마이페이지 또는 상품 화면에서 열어보세요.');
+      addLog("SYSTEM", `사용 권한 지급(${reason || '자동'}): ${대상이름}(${대상연락처}) — 주문 ${order.id}`);
+      const 나에게 = currentUser && currentUser.contact === 대상연락처;
+      showToast(나에게
+        ? '🎉 바로 사용하실 수 있습니다! 마이페이지에서 열어보세요.'
+        : `✅ "${대상이름}" 님에게 사용 권한을 지급했습니다. (${대상연락처})`);
       return true;
     }
 
@@ -4422,11 +4429,10 @@
     function grantNow(orderId) {
       const o = orders.find(x => String(x.id) === String(orderId));
       if (!o) { showToast('주문을 찾을 수 없습니다.'); return; }
-      if (!currentUser) { showToast('로그인 상태에서만 지급할 수 있습니다.'); return; }
-      const 남 = o.memberContact && o.memberContact !== currentUser.contact;
-      const msg = 남
-        ? `이 주문은 다른 분(${o.memberContact}) 것으로 보입니다.\n지금 로그인한 "${currentUser.contact}" 계정에 권한이 들어갑니다.\n\n계속할까요? (다른 손님이면 🔑입장코드를 발급해 보내세요)`
-        : `"${o.customer}" 주문에 사용 권한을 바로 지급할까요?`;
+      const 대상 = o.memberContact || o.phone || '(연락처 없음)';
+      const msg = `"${o.customer}" 님에게 사용 권한을 바로 지급할까요?\n\n`
+        + `받는 계정: ${대상}\n`
+        + `입장코드 절차 없이 즉시 사용할 수 있게 됩니다.`;
       if (!confirm(msg)) return;
       if (!grantDigitalAccess(o, '관리자지급')) {
         showToast('이 주문에는 프로그램 상품이 없습니다.');
