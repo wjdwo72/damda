@@ -1369,15 +1369,19 @@
             </form>
           </div>
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="font-bold text-base text-white flex items-center gap-2">📋 전체 회원 목록</h3>
-              <button onclick="deleteAllMembers()" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold px-2.5 py-1.5 bg-rose-500/10 rounded border border-rose-500/20 transition">🗑️ 회원 전체 삭제</button>
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+              <h3 class="font-bold text-base text-white flex items-center gap-2">📋 회원 목록</h3>
+              <div class="flex items-center gap-2">
+                <input type="text" id="member-search" oninput="renderMembers()" placeholder="이름/이메일 검색…" class="p-2 bg-slate-950 border border-slate-800 rounded text-white text-xs focus:outline-none focus:border-sky-500" style="width:180px;">
+                <button onclick="renderMembers()" class="text-[11px] text-slate-300 font-bold px-2.5 py-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 transition">↻ 새로고침</button>
+                <button onclick="deleteAllMembers()" class="text-[10px] text-rose-400 hover:text-rose-300 font-bold px-2.5 py-2 bg-rose-500/10 rounded border border-rose-500/20 transition">🗑️ 전체삭제</button>
+              </div>
             </div>
             <div class="overflow-x-auto text-xs">
-              <table class="w-full text-left border-collapse">
+              <table class="w-full text-left border-collapse" style="min-width:900px;">
                 <thead>
                   <tr class="bg-slate-950 text-slate-400 border-b border-slate-800">
-                    <th class="p-3">회원명</th><th class="p-3">연락처/이메일</th><th class="p-3">가입 경로</th><th class="p-3">등급</th><th class="p-3">가입일</th><th class="p-3">관리</th>
+                    <th class="p-3">#</th><th class="p-3">이름</th><th class="p-3">이메일</th><th class="p-3">가입경로</th><th class="p-3">등급</th><th class="p-3">결제상태</th><th class="p-3">계산기 횟수</th><th class="p-3">텔레그램</th><th class="p-3">가입일</th><th class="p-3">최종접속</th><th class="p-3">관리</th>
                   </tr>
                 </thead>
                 <tbody id="admin-members-tbody"></tbody>
@@ -4690,6 +4694,18 @@
       return Math.max(0, limit - programUsedCount(p.id));
     }
 
+    // 지금 로그인한 사람의 회원 정보
+    function currentMember() {
+      if (!currentUser) return null;
+      return members.find(m => m.contact === currentUser.contact) || null;
+    }
+    // 결제회원 = 등급 '유료' + 결제상태 '활성' (사장님이 회원관리에서 지정)
+    // 이러면 입장코드/구독 없이도 프로그램을 쓸 수 있습니다.
+    function isPaidMember() {
+      const m = currentMember();
+      return !!(m && m.payStatus === '활성' && (m.grade === '유료' || !m.grade));
+    }
+
     function openProgram(productId) {
       const p = products.find(x => x.id === productId);
       if (!p) { showToast('상품을 찾을 수 없습니다.'); return; }
@@ -4710,6 +4726,8 @@
           saveSubscriptions();
           showToast(`사용 ${sub.used}/${limit}회째 · ${limit - sub.used}회 남음`);
         }
+      } else if (isPaidMember()) {
+        // 💳 결제회원 — 사장님이 '유료·활성'으로 지정 → 입장코드 없이 무제한 사용
       } else if (mode === 'free') {
         // 완전 무료 — 누구나 사용
       } else if (mode === 'trial') {
@@ -4765,6 +4783,7 @@
           ? `${term} · ${Math.max(0, pLimit - (sub.used || 0))}회 남음`
           : term;
       }
+      else if (isPaidMember()) stateText = '💳 결제회원 이용중';
       else if (mode === 'free') stateText = '🎉 무료 이용';
       else {
         const limit = trialLimitOf(p);
@@ -5046,7 +5065,12 @@
           const hasSub = !!activeSubFor(selectedProduct.id);
           const left = trialLeft(selectedProduct);      // null = 무제한
           const pid = selectedProduct.id;
-          if ((hasSub && (left === null || left > 0)) || (!hasSub && (mode === 'free' || left === null || left > 0))) {
+          if (!hasSub && isPaidMember()) {
+            // 💳 결제회원 — 입장코드/구독 없이 바로 사용
+            tryBtn.classList.remove('hidden');
+            tryBtn.onclick = () => openProgram(pid);
+            tryBtn.innerText = '▶ 프로그램 사용하기 (결제회원)';
+          } else if ((hasSub && (left === null || left > 0)) || (!hasSub && (mode === 'free' || left === null || left > 0))) {
             tryBtn.classList.remove('hidden');
             tryBtn.onclick = () => openProgram(pid);
             if (hasSub) {
@@ -6420,21 +6444,92 @@
     }
 
     // --- 회원 관리 ---
+    // 가입경로 → 아이콘
+    function channelIcon(ch) {
+      const c = (ch || '').toLowerCase();
+      if (c.includes('kakao') || ch === '카카오') return '🟡 카카오';
+      if (c.includes('naver') || ch === '네이버') return '🟢 네이버';
+      if (c.includes('google') || ch === '구글') return '🔵 Google';
+      return '📧 이메일';
+    }
+    // 회원의 계산기 실제 사용 횟수 = 그 회원이 가진 구독들의 used 합 (없으면 저장된 값)
+    function memberCalcUses(m) {
+      const subs = subscriptions.filter(s => s.memberContact === m.contact);
+      if (subs.length) return subs.reduce((a, s) => a + (s.used || 0), 0);
+      return m.calcCount || 0;
+    }
+
     function renderMembers() {
       const tbody = document.getElementById('admin-members-tbody');
       if (!tbody) return;
-      tbody.innerHTML = members.map(m => `
+      const q = ((document.getElementById('member-search') || {}).value || '').trim().toLowerCase();
+      const list = members.filter(m => !q
+        || (m.name || '').toLowerCase().includes(q)
+        || (m.contact || '').toLowerCase().includes(q));
+
+      const gradeSel = (m) => {
+        const g = m.grade === '유료' || m.grade === '무료' ? m.grade : '무료';
+        return `<select onchange="saveMemberField(${m.id},'grade',this.value)" class="bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-white text-[11px]">
+          <option ${g === '유료' ? 'selected' : ''}>유료</option>
+          <option ${g === '무료' ? 'selected' : ''}>무료</option></select>`;
+      };
+      const paySel = (m) => {
+        const p = m.payStatus === '활성' ? '활성' : '없음';
+        return `<select onchange="saveMemberField(${m.id},'payStatus',this.value)" class="bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-white text-[11px]">
+          <option ${p === '활성' ? 'selected' : ''}>활성</option>
+          <option ${p === '없음' ? 'selected' : ''}>없음</option></select>`;
+      };
+      const tele = (m) => m.telegramId
+        ? `<span class="text-emerald-400 font-bold">✅ 연결됨</span><br><span class="text-[9px] text-slate-500">ID: ${m.telegramId}</span>`
+        : `<span class="text-slate-500">— 미연결</span>`;
+
+      tbody.innerHTML = list.map((m, i) => `
         <tr class="border-b border-slate-800 hover:bg-slate-900/50 transition">
-          <td class="p-3 font-bold text-white">${m.name}</td>
-          <td class="p-3 text-slate-400">${m.contact}</td>
-          <td class="p-3 text-slate-400">${m.channel}</td>
-          <td class="p-3"><span class="inline-block bg-sky-500/10 text-sky-400 px-2.5 py-0.5 rounded border border-sky-500/20 font-bold">${m.grade}</span></td>
-          <td class="p-3 text-slate-500">${m.joined}</td>
-          <td class="p-3"><button onclick="deleteMember(${m.id})" class="text-rose-400 hover:text-rose-600 font-bold px-2 py-1 text-[10px] bg-rose-500/10 rounded border border-rose-500/20 transition">삭제</button></td>
+          <td class="p-3 text-slate-500">${i + 1}</td>
+          <td class="p-3 font-bold text-white">${m.name || ''}</td>
+          <td class="p-3 text-sky-400">${m.contact || ''}</td>
+          <td class="p-3 text-slate-400 whitespace-nowrap">${channelIcon(m.channel)}</td>
+          <td class="p-3">${gradeSel(m)}</td>
+          <td class="p-3">${paySel(m)}</td>
+          <td class="p-3">
+            <div class="flex items-center gap-1">
+              <input type="number" id="calc-${m.id}" value="${memberCalcUses(m)}" min="0" class="bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-white text-[11px]" style="width:56px;">
+              <button onclick="saveMemberCalc(${m.id})" class="text-[10px] font-bold px-1.5 py-1 bg-sky-500/15 text-sky-300 rounded border border-sky-500/25">저장</button>
+            </div>
+          </td>
+          <td class="p-3">${tele(m)}</td>
+          <td class="p-3 text-slate-500 whitespace-nowrap">${m.joined || ''}</td>
+          <td class="p-3 text-slate-500 whitespace-nowrap">${m.lastSeen || m.joined || ''}</td>
+          <td class="p-3"><button onclick="deleteMember(${m.id})" class="text-rose-400 hover:text-rose-600 font-bold px-2 py-1 text-[10px] bg-rose-500/10 rounded border border-rose-500/20 transition">탈퇴</button></td>
         </tr>
-      `).join('');
+      `).join('') || `<tr><td colspan="11" class="p-6 text-center text-slate-500">${q ? '검색 결과가 없습니다.' : '아직 가입한 회원이 없습니다.'}</td></tr>`;
+
       const statMembers = document.getElementById('stat-members');
       if (statMembers) statMembers.innerText = `${members.length}개사`;
+    }
+
+    // 등급·결제상태 즉시 저장
+    function saveMemberField(id, field, value) {
+      const m = members.find(x => String(x.id) === String(id));
+      if (!m) return;
+      m[field] = value;
+      persistMembers();
+      addLog("SYSTEM", `회원정보 수정: ${m.name} · ${field}=${value}`);
+      showToast(`✅ ${m.name} · ${field === 'grade' ? '등급' : '결제상태'} "${value}" 저장`);
+    }
+    // 계산기 횟수 저장 (저장 버튼)
+    function saveMemberCalc(id) {
+      const m = members.find(x => String(x.id) === String(id));
+      if (!m) return;
+      const el = document.getElementById('calc-' + id);
+      const v = Math.max(0, parseInt(el && el.value, 10) || 0);
+      m.calcCount = v;
+      // 실제 구독 사용횟수도 이 값에 맞춤 (구독이 있으면 첫 구독에 반영)
+      const sub = subscriptions.find(s => s.memberContact === m.contact);
+      if (sub) { sub.used = v; saveSubscriptions(); }
+      persistMembers();
+      addLog("SYSTEM", `계산기 횟수 저장: ${m.name} = ${v}`);
+      showToast(`✅ ${m.name} 계산기 횟수 ${v} 저장`);
     }
 
     function persistMembers() {
@@ -7166,9 +7261,17 @@
 
     // 회원가입/로그인 시 관리자 회원 목록에 자동 반영 (+영구저장)
     function registerMemberOnLogin(name, contact, channel) {
+      const today = new Date().toISOString().split('T')[0];
       const exists = members.find(m => m.contact === contact);
-      if (exists) return exists;
-      const member = { id: Date.now(), name, contact, channel, grade: "일반회원", joined: new Date().toISOString().split('T')[0] };
+      if (exists) {                       // 기존 회원이면 최종접속만 갱신
+        exists.lastSeen = today;
+        persistMembers();
+        renderMembers();
+        return exists;
+      }
+      const member = { id: Date.now(), name, contact, channel,
+        grade: "무료", payStatus: "없음", calcCount: 0,
+        joined: today, lastSeen: today };
       members.unshift(member);
       renderMembers();
       persistMembers();
