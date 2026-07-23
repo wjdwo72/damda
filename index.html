@@ -4416,6 +4416,9 @@
 
       if (!granted) return false;
       saveSubscriptions();
+      // 이 회원을 '유료·활성'으로도 올려둠 → 상품 페이지의 사용 버튼이 확실히 뜨게
+      const mem = members.find(x => x.contact === 대상연락처);
+      if (mem) { mem.grade = '유료'; mem.payStatus = '활성'; persistMembers(); renderMembers && renderMembers(); }
       order.status = '결제 완료';
       saveOrders();
       if (typeof renderAdminOrders === 'function') renderAdminOrders();
@@ -4701,9 +4704,13 @@
     }
     // 결제회원 = 등급 '유료' + 결제상태 '활성' (사장님이 회원관리에서 지정)
     // 이러면 입장코드/구독 없이도 프로그램을 쓸 수 있습니다.
+    // 사장님(관리자) 계정은 항상 사용 가능 — 테스트·시연을 위해.
     function isPaidMember() {
+      if (isAdminAuthed) return true;    // 관리자 진입(구글·비번 무관) → 항상 사용 가능
+      if (currentUser && isOwnerEmail(currentUser.contact)) return true;
       const m = currentMember();
-      return !!(m && m.payStatus === '활성' && (m.grade === '유료' || !m.grade));
+      // 등급이 '유료' 이거나 결제상태가 '활성' 이면 사용 가능 (둘 중 하나만 맞아도)
+      return !!(m && (m.grade === '유료' || m.payStatus === '활성'));
     }
 
     function openProgram(productId) {
@@ -4783,7 +4790,7 @@
           ? `${term} · ${Math.max(0, pLimit - (sub.used || 0))}회 남음`
           : term;
       }
-      else if (isPaidMember()) stateText = '💳 결제회원 이용중';
+      else if (isPaidMember()) stateText = (currentUser && isOwnerEmail(currentUser.contact)) ? '👑 관리자 이용중' : '💳 결제회원 이용중';
       else if (mode === 'free') stateText = '🎉 무료 이용';
       else {
         const limit = trialLimitOf(p);
@@ -5066,10 +5073,11 @@
           const left = trialLeft(selectedProduct);      // null = 무제한
           const pid = selectedProduct.id;
           if (!hasSub && isPaidMember()) {
-            // 💳 결제회원 — 입장코드/구독 없이 바로 사용
+            // 💳 결제회원(또는 관리자) — 입장코드/구독 없이 바로 사용
+            const owner = currentUser && isOwnerEmail(currentUser.contact);
             tryBtn.classList.remove('hidden');
             tryBtn.onclick = () => openProgram(pid);
-            tryBtn.innerText = '▶ 프로그램 사용하기 (결제회원)';
+            tryBtn.innerText = owner ? '▶ 프로그램 사용하기 (관리자)' : '▶ 프로그램 사용하기 (결제회원)';
           } else if ((hasSub && (left === null || left > 0)) || (!hasSub && (mode === 'free' || left === null || left > 0))) {
             tryBtn.classList.remove('hidden');
             tryBtn.onclick = () => openProgram(pid);
