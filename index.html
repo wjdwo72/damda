@@ -660,6 +660,17 @@
               <p id="detail-sub-note" class="text-[11px] text-slate-300 leading-relaxed"></p>
               <p id="detail-sub-terms" class="text-[10px] text-slate-500">※ 배송이 없는 디지털 상품이며, <b class="text-slate-400">1개월 단위</b>로 구독합니다. (매월 갱신)</p>
               <!-- 무료 / 무료체험 / 구독중이면 여기서 바로 실행 -->
+              <!-- 남은 횟수 · 잔여일 표시 (로그인 + 사용권한 있을 때) -->
+              <div id="detail-usage-box" class="hidden" style="display:flex;gap:8px;margin-top:2px;">
+                <div style="flex:1;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);border-radius:8px;padding:8px;text-align:center;">
+                  <p style="font-size:9px;color:#7dd3fc;margin-bottom:2px;">남은 횟수</p>
+                  <p id="detail-usage-count" style="font-size:15px;font-weight:900;color:#38bdf8;">-</p>
+                </div>
+                <div style="flex:1;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);border-radius:8px;padding:8px;text-align:center;">
+                  <p style="font-size:9px;color:#6ee7b7;margin-bottom:2px;">잔여일</p>
+                  <p id="detail-usage-days" style="font-size:15px;font-weight:900;color:#34d399;">-</p>
+                </div>
+              </div>
               <button id="detail-try-btn" class="hidden w-full py-3 rounded-lg font-black text-sm mt-1" style="background:#4f46e5;color:#fff;border:none;cursor:pointer;">▶ 지금 바로 사용해보기</button>
               <p id="detail-try-note" class="hidden text-[10px] text-center" style="color:#fbbf24;"></p>
 
@@ -5193,6 +5204,33 @@
       if (couponBox) {
         const canUseNow = isSub && (isPaidMember() || activeSubFor(selectedProduct.id));
         couponBox.classList.toggle('hidden', !(isSub && !canUseNow));
+      }
+
+      // 📊 남은 횟수 · 잔여일 표시 (프로그램 상품 + 사용권한 있을 때)
+      const usageBox = document.getElementById('detail-usage-box');
+      if (usageBox) {
+        const sub = activeSubFor(selectedProduct.id);
+        const owner = currentUser && isOwnerEmail(currentUser.contact);
+        const show = isSub && (sub || isPaidMember());
+        usageBox.classList.toggle('hidden', !show);
+        if (show) {
+          const cEl = document.getElementById('detail-usage-count');
+          const dEl = document.getElementById('detail-usage-days');
+          const today = new Date().toISOString().split('T')[0];
+          if (sub) {
+            // 실제 구독/이용권 — 남은 횟수·잔여일 계산
+            const pLimit = paidLimitOf(selectedProduct);
+            cEl.innerText = pLimit ? `${Math.max(0, pLimit - (sub.used || 0))}회` : '무제한';
+            if (sub.expiresAt) {
+              const d = Math.ceil((new Date(sub.expiresAt) - new Date(today)) / 86400000);
+              dEl.innerText = `${Math.max(0, d)}일`;
+            } else dEl.innerText = '무제한';
+          } else {
+            // 결제회원/관리자 — 계정 권한이라 무제한
+            cEl.innerText = '무제한';
+            dEl.innerText = owner ? '무제한' : '무제한';
+          }
+        }
       }
       if (tryBtn && tryNote) {
         tryBtn.classList.add('hidden'); tryNote.classList.add('hidden');
