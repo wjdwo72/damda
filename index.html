@@ -4228,6 +4228,18 @@
       if (c.kind === 'percent') return `％ ${c.value}% 할인`;
       return `💰 ${Number(c.value).toLocaleString()}원 할인`;
     }
+    // 쿠폰 적용 대상을 사람이 읽기 좋게 (기간제/횟수제 구분)
+    function couponTargetLabel(t) {
+      if (t === 'pass') return '🎫 횟수 이용권 전용';
+      if (t === 'passday') return '🎫 기간 이용권 전용';
+      if (t === 'subscription') return '💻 구독 전용';
+      return '📦 전체 상품';
+    }
+    // 쿠폰 대상과 상품 유형이 맞는지
+    function couponMatchesType(target, prodType) {
+      if (!target || target === 'all') return true;
+      return target === prodType;
+    }
     // --- 쿠폰 받는 분: 회원관리 목록에서 선택 ---
     function toggleCouponMemberPicker() {
       const box = document.getElementById('coupon-member-picker');
@@ -4309,7 +4321,7 @@
               ${c.sentAt ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">발송함 ${c.sentAt}</span>`
                          : (hasContact ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">미발송</span>` : `<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">받는분 미지정</span>`)}
             </div>
-            <p class="text-[10px] text-slate-400 mt-0.5">${couponLabel(c)} · ${c.target === 'subscription' ? '구독 전용' : '전체 상품'}${c.memo ? ` · ${c.memo}` : ''}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">${couponLabel(c)} · ${couponTargetLabel(c.target)}${c.memo ? ` · ${c.memo}` : ''}</p>
             <p class="text-[10px] ${hasContact ? 'text-slate-300' : 'text-slate-600'}">📮 ${hasContact ? `${c.rname || '(이름없음)'} · ${c.rcontact}` : '받는 분 연락처 없음'}</p>
             <p class="text-[9px] text-slate-600">발행 ${c.createdAt}${c.used ? ` · 사용 ${c.usedAt} (${c.usedBy})` : ''}</p>
           </div>
@@ -4329,7 +4341,7 @@
     // --- 쿠폰 발송 (무료 — 내 폰 문자앱 / 메일앱이 열림) ---
     function couponMessageText(c) {
       const benefit = c.kind === 'free' ? '무료(100% 할인)' : (c.kind === 'percent' ? `${c.value}% 할인` : `${Number(c.value).toLocaleString()}원 할인`);
-      const scope = c.target === 'subscription' ? '구독 상품' : '전체 상품';
+      const scope = couponTargetLabel(c.target);
       return `[담다] ${c.rname || '고객'}님, 쿠폰을 보내드립니다.\n\n`
         + `쿠폰코드: ${c.code}\n혜택: ${benefit} (${scope})\n\n`
         + `사용방법: 담다 홈페이지에서 상품 주문 시 "쿠폰 코드" 칸에 위 코드를 입력하면 할인됩니다. (1회용)\n\n감사합니다.`;
@@ -4797,7 +4809,7 @@
       if (!c) { showToast('❌ 존재하지 않는 쿠폰입니다.'); return; }
       if (c.used) { showToast('❌ 이미 사용된 쿠폰입니다.'); return; }
       // 구독 전용 쿠폰인데 일반 상품이면 거부
-      if (c.target === 'subscription' && !isDigital(selectedProduct.type)) {
+      if ((c.target === 'subscription' || c.target === 'pass' || c.target === 'passday') && !couponMatchesType(c.target, selectedProduct.type)) {
         showToast('이 쿠폰은 프로그램(구독·이용권) 상품에만 쓸 수 있습니다.'); return;
       }
       // 100% 무료 쿠폰만 "바로 사용"이 됩니다. 할인 쿠폰은 결제가 필요합니다.
@@ -5548,7 +5560,7 @@
     // 쿠폰 대상 금액(구독 전용 쿠폰이면 구독 상품 금액만)
     function couponTargetAmount(c) {
       if (!c) return 0;
-      const items = c.target === 'subscription' ? cart.filter(i => i.product.type === 'subscription') : cart;
+      const items = (c.target && c.target !== 'all') ? cart.filter(i => i.product.type === c.target) : cart;
       return items.reduce((s, i) => s + (i.product.price * i.quantity), 0);
     }
     function couponDiscount(c) {
@@ -5567,7 +5579,7 @@
       const c = coupons.find(x => x.code === code);
       if (!c) { showToast('❌ 존재하지 않는 쿠폰 코드입니다.'); return; }
       if (c.used) { showToast('❌ 이미 사용된 쿠폰입니다.'); return; }
-      if (c.target === 'subscription' && !cart.some(i => i.product.type === 'subscription')) {
+      if (c.target && c.target !== 'all' && !cart.some(i => i.product.type === c.target)) {
         showToast('❌ 이 쿠폰은 구독 상품에만 사용할 수 있습니다.'); return;
       }
       appliedCoupon = c;
@@ -6156,6 +6168,14 @@
       return o.date || '-';
     }
 
+    // 주문의 상품 유형 라벨 (기간제/횟수제/구독 구분)
+    function orderTypeLabel(o) {
+      const snap = o.cartSnapshot || [];
+      if (snap.some(i => i.type === 'passday')) return '🎫 기간 이용권 (배송없음)';
+      if (snap.some(i => i.type === 'pass')) return '🎫 횟수 이용권 (배송없음)';
+      if (snap.some(i => i.type === 'subscription') || o.isSubscription) return '💻 구독 (배송없음)';
+      return '';
+    }
     // 주문 유통상태 뱃지 색
     function orderStatusStyle(st) {
       if (st === '쿠폰') return 'background:rgba(168,85,247,.12);color:#c084fc;border-color:rgba(168,85,247,.3);';
@@ -6174,7 +6194,7 @@
             <p class="text-[10px] text-slate-400">${orderWhen(o)}</p>
           </td>
           <td class="p-3 font-extrabold text-sky-400">${(o.total || 0).toLocaleString()}원</td>
-          <td class="p-3 text-slate-400">${o.delivery || '-'}</td>
+          <td class="p-3 text-slate-400">${orderTypeLabel(o) || o.delivery || '-'}</td>
           <td class="p-3">
             <span class="inline-block px-2.5 py-0.5 rounded border font-bold" style="${orderStatusStyle(o.status)}">${o.status}</span>
           </td>
