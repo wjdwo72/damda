@@ -1017,7 +1017,7 @@
 <!-- ================= 탭 4: 상권분석 ================= -->
 <main id="tab-market" class="tabpanel">
 
-  <section class="card">
+  <section class="card" id="mkBasicSection">
     <h2 data-i18n="mk_h_basic">① 기본 상권 정보</h2>
     <div class="grid">
       <div class="field full">
@@ -4429,6 +4429,15 @@ async function pickLocationOnMap(lat, lng){
   }
   const auto = $('mkAutoStatus');
   if(auto){ auto.dataset.locked='true'; auto.innerHTML = `📍 지도에서 <b>${shown}</b>을(를) 입지로 지정했습니다. <b>"🔍 이 3가지로 자동 분석하기"</b>를 누르면 이 위치 기준으로 분석됩니다.`; }
+  // 좌표가 정해졌으니 ① 기본 상권 정보로 자동으로 돌아감
+  const back = $('mkBasicSection');
+  if(back){
+    setTimeout(()=>{
+      back.scrollIntoView({ behavior:'smooth', block:'start' });
+      back.style.outline = '3px solid var(--wrap)';
+      setTimeout(()=>{ back.style.outline=''; }, 2000);
+    }, 400);
+  }
 }
 function updateMkMap(lat, lng){
   mkLastLat = lat; mkLastLng = lng;
