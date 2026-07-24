@@ -6792,6 +6792,18 @@
       members = members.filter(item => String(item.id) !== key);
       renderMembers();
       persistMembers();
+
+      // 탈퇴한 사람이 지금 로그인돼 있으면 로그인 상태도 풀어줌 → 다시 들어오면 "처음부터 가입"
+      if (m && currentUser && currentUser.contact === m.contact) {
+        currentUser = null;
+        idbSet('current_user', null);
+        applyLoginState();
+        const 보호된화면 = ['page-admin', 'page-mypage', 'page-program'];
+        if (보호된화면.some(pid => { const el = document.getElementById(pid); return el && !el.classList.contains('hidden'); })) {
+          navigate('home');
+        }
+      }
+
       addLog("SYSTEM", `회원 삭제: ${m ? m.name : id}`);
       showToast(`🗑️ 회원 정보가 삭제되었습니다.`);
     }
