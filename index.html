@@ -4475,10 +4475,60 @@
     }
 
     // --- 관리자: 구독 주문에 입장코드 발급 ---
+    // 입장코드를 크게 보여주는 팝업 (복사 버튼 포함)
+    function showAccessCodePopup(a, o, isNew) {
+      if (!a) return;
+      const term = (a.days !== undefined && a.days !== null)
+        ? (a.days > 0 ? `${a.days}일` : '기간 무제한')
+        : `${a.months || 1}개월`;
+      const cnt = a.uses ? `${a.uses}회` : '횟수 무제한';
+      let box = document.getElementById('accesscode-popup');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'accesscode-popup';
+        box.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:20px;';
+        document.body.appendChild(box);
+      }
+      box.innerHTML = `
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:16px;max-width:420px;width:100%;padding:24px;text-align:center;">
+          <p style="font-size:13px;color:#94a3b8;margin-bottom:4px;">${isNew ? '🔑 입장코드가 발급되었습니다' : '🔑 이 주문의 입장코드'}</p>
+          <p style="font-size:12px;color:#cbd5e1;margin-bottom:14px;">${a.rname || o.customer || ''} · ${a.productName || ''}</p>
+          <div style="background:#020617;border:2px dashed #38bdf8;border-radius:12px;padding:16px;margin-bottom:6px;">
+            <span id="ac-code-text" style="font-size:26px;font-weight:900;letter-spacing:3px;color:#38bdf8;user-select:all;">${a.code}</span>
+          </div>
+          <p style="font-size:11px;color:#64748b;margin-bottom:16px;">이용조건: ${term} · ${cnt}${a.used ? ' · <span style="color:#f87171;">이미 사용됨</span>' : ''}</p>
+          <div style="display:flex;gap:8px;">
+            <button onclick="navigator.clipboard&&navigator.clipboard.writeText('${a.code}');this.innerText='✅ 복사됨';" style="flex:1;padding:11px;border-radius:9px;border:none;background:#0ea5e9;color:#fff;font-weight:800;cursor:pointer;">📋 코드 복사</button>
+            <button onclick="sendAccessSms('${a.code}')" style="flex:1;padding:11px;border-radius:9px;border:none;background:#22c55e;color:#fff;font-weight:800;cursor:pointer;">📱 문자 보내기</button>
+          </div>
+          <button onclick="document.getElementById('accesscode-popup').remove()" style="width:100%;margin-top:8px;padding:9px;border-radius:9px;border:none;background:transparent;color:#64748b;font-weight:700;cursor:pointer;">닫기</button>
+          <p style="font-size:10px;color:#475569;margin-top:8px;">손님이 마이페이지 → 「입장코드 입력」에 넣으면 프로그램을 씁니다.</p>
+        </div>`;
+    }
+    // 문자 보내기 (기존 accessCode 문자 로직 재사용)
+    function sendAccessSms(code) {
+      const a = accessCodes.find(x => x.code === code);
+      if (a && typeof markAccessSent === 'function') { /* 목록의 문자 버튼과 동일 흐름 */ }
+      if (a && a.rcontact) {
+        const msg = (typeof accessCodeMessage === 'function') ? accessCodeMessage(a) : `입장코드: ${code}`;
+        location.href = `sms:${a.rcontact}?body=${encodeURIComponent(msg)}`;
+        if (typeof markAccessSent === 'function') markAccessSent(a);
+      } else {
+        showToast('연락처가 없어 문자를 보낼 수 없습니다. 코드를 복사해 직접 보내주세요.');
+      }
+    }
+
     function issueAccessCode(orderId) {
       const o = orders.find(x => x.id === orderId);
       if (!o) return;
       if (!o.isSubscription) { showToast('구독 주문에만 입장코드를 발급할 수 있습니다.'); return; }
+      // 이미 이 주문에 발급된 코드가 있으면 새로 만들지 않고 그 코드를 보여줌
+      const existing = accessCodes.find(a => String(a.orderId) === String(o.id));
+      if (existing) {
+        showAccessCodePopup(existing, o, false);
+        switchAdminTab('coupons');
+        return;
+      }
       const subItem = (o.cartSnapshot || []).find(i => isDigital(i.type));
       const productId = subItem ? subItem.productId : (products.find(p => isDigital(p.type)) || {}).id;
       const productName = subItem ? subItem.name : (o.items || '구독 상품');
@@ -4502,7 +4552,7 @@
       saveOrders(); renderAdminOrders(); renderAdminDelivery();
       renderAccessCodes();
       addLog("SYSTEM", `입장코드 발급: ${code} → ${o.customer} (${productName})`);
-      showToast(`🔑 입장코드 "${code}" 발급! 아래 목록에서 📱문자/📲텔레그램으로 보내세요.`);
+      showAccessCodePopup(accessCodes[0], o, true);
       switchAdminTab('coupons');
     }
 
