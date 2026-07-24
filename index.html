@@ -2703,6 +2703,20 @@
         if(!Array.isArray(arr) && Array.isArray(SEED.products)) arr = SEED.products;   // 방문자 → 시드
         if(Array.isArray(arr)){
           products = arr;
+          // 🔧 프로그램 상품 자동 보정: 시드(최신)에 접속 링크가 있으면 그걸로 강제 동기화.
+          //    예전에 통째로 박아둔 큰 파일(programFile)이 브라우저에 남아 옛 버전이 실행되는 문제를
+          //    누구나(관리자·회원) 새로고침만 하면 자동으로 고쳐지게 함.
+          if(Array.isArray(SEED.products)){
+            let _mig = false;
+            products.forEach(p=>{
+              const s = SEED.products.find(x=> String(x.id)===String(p.id) || (x.name && x.name===p.name));
+              if(s && s.programUrl && (p.programFile || p.programUrl !== s.programUrl)){
+                p.programUrl = s.programUrl; p.programFile=''; p.programFileName='';
+                _mig = true;
+              }
+            });
+            if(_mig) idbSet('products', products);
+          }
           if(typeof renderProducts === 'function') renderProducts();
           if(typeof renderAdminProducts === 'function') renderAdminProducts();
         }
@@ -6261,7 +6275,19 @@
         const byOrder = (a, b) => (a._order == null ? 9999 : a._order) - (b._order == null ? 9999 : b._order);
 
         if (!prodSnap.empty) {
-          products = prodSnap.docs.map(d => d.data()).sort(byOrder);
+          const serverProds = prodSnap.docs.map(d => d.data()).sort(byOrder);
+          // 서버에 없는 '프로그램 상품(계산기 등)'은 로컬 것을 유지.
+          // (계산기는 용량 문제로 서버에 안 올렸을 수 있어, 서버로 덮으면 사라짐 → 방지)
+          const _sids = new Set(serverProds.map(p => String(p.id)));
+          const _keep = (products || []).filter(p => isDigital(p.type) && !_sids.has(String(p.id)));
+          products = serverProds.concat(_keep);
+          // 프로그램 상품은 시드(최신) 접속 링크로 보정 → 옛 파일 자동 제거
+          if (Array.isArray(SEED.products)) {
+            products.forEach(p => {
+              const s = SEED.products.find(x => String(x.id) === String(p.id) || (x.name && x.name === p.name));
+              if (s && s.programUrl) { p.programUrl = s.programUrl; if (!s.programFile) { p.programFile = ''; p.programFileName = ''; } }
+            });
+          }
           idbSet('products', products);
           renderProducts(); if (typeof renderAdminProducts === 'function') renderAdminProducts();
         }
