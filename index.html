@@ -4779,7 +4779,18 @@
     function accessModeOf(p) { return (p && p.accessMode) || 'paid'; }
     function trialLimitOf(p) { return Math.max(0, parseInt(p && p.trialUses, 10) || 0); }
     function paidLimitOf(p) { return Math.max(0, parseInt(p && p.paidUses, 10) || 0); }
-    function programUsedCount(productId) { return programUses[String(productId)] || 0; }
+    // 프로그램 식별키 — 같은 프로그램(접속 링크/파일)이면 상품이 달라도 체험 횟수를 공유함.
+    // 예: 같은 계산기의 30일권·15회권은 "무료 체험 5회"를 합쳐서 5회만 줌.
+    function programKey(p) {
+      if (!p) return '';
+      return p.programUrl ? ('url:' + p.programUrl)
+           : p.programFileName ? ('file:' + p.programFileName)
+           : ('id:' + p.id);
+    }
+    function programUsedCount(p) {
+      const obj = (typeof p === 'object') ? p : (products.find(x => String(x.id) === String(p)) || { id: p });
+      return programUses[programKey(obj)] || 0;
+    }
     // 구독자에게 남은 횟수 (0 설정 = 무제한 → null)
     function paidLeft(p, sub) {
       const limit = paidLimitOf(p);
@@ -4795,7 +4806,7 @@
       if (accessModeOf(p) !== 'trial') return 0;                // 유료인데 구독 없음
       const limit = trialLimitOf(p);
       if (!limit) return null;                                  // 체험인데 횟수 미지정 = 무제한
-      return Math.max(0, limit - programUsedCount(p.id));
+      return Math.max(0, limit - programUsedCount(p));
     }
 
     // 🎟️ 상품 페이지에서 쿠폰 코드로 바로 사용 (장바구니·주문서 없이)
@@ -4888,14 +4899,14 @@
           return;
         }
         const limit = trialLimitOf(p);
-        const used = programUsedCount(productId);
+        const used = programUsedCount(p);
         if (limit && used >= limit) {
           selectedProduct = p; navigate('detail');
           openTrialEndModal(p);              // 💳 구매 유도 팝업
           return;
         }
-        if (limit) {                                  // 횟수 제한이 있을 때만 차감
-          programUses[String(productId)] = used + 1;
+        if (limit) {                                  // 횟수 제한이 있을 때만 차감 (프로그램 단위 공유)
+          programUses[programKey(p)] = used + 1;
           saveProgramUses();
           const left = limit - (used + 1);
           showToast(left === 0
@@ -4941,7 +4952,7 @@
       else {
         const limit = trialLimitOf(p);
         stateText = limit
-          ? `🎁 무료 체험 — ${Math.max(0, limit - programUsedCount(productId))}회 남음`
+          ? `🎁 무료 체험 — ${Math.max(0, limit - programUsedCount(p))}회 남음`
           : '🎁 무료 체험';
       }
       document.getElementById('program-expire').innerText = stateText;
