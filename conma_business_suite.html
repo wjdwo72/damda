@@ -376,7 +376,7 @@
   .basis-box .b-out{ font-size:.72rem; color:var(--muted); line-height:1.5; }
   .basis-box .b-out b{ color:var(--ink); }
 
-  /* 경쟁점 목록 (카카오 검색 결과) */
+  /* 경쟁점 목록  */
   .comp-list{ margin-top:10px; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
   .comp-list .comp-head{ background:var(--paper); font-size:.72rem; color:var(--muted); padding:7px 12px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
   .comp-item{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line); }
@@ -1098,7 +1098,7 @@
     <h2 data-i18n="mk_h_competition">② 경쟁 강도 분석</h2>
 
     <div class="btn-row" style="margin-top:0;">
-      <button class="btn-secondary" id="btnRealCompetitorSearch" data-i18n="mk_btn_realSearch">🔍 실시간 경쟁점 검색 (카카오 API)</button>
+      <button class="btn-secondary" id="btnRealCompetitorSearch" data-i18n="mk_btn_realSearch">🔍 실시간 경쟁점 검색</button>
     </div>
     <div class="note" id="mkApiStatus" data-i18n="mk_api_status_nokey">API 키가 설정되지 않았습니다. 상단 ⚙ 설정에서 키를 입력해주세요.</div>
 
@@ -1161,7 +1161,7 @@
         <input type="number" id="mkConversionRate" value="2" step="0.1">
       </div>
       <div class="field">
-        <label data-i18n="mk_l_avgSpend">예상 객단가 <span class="hint">원 · 카카오맵 대표메뉴 중간가 기준</span></label>
+        <label data-i18n="mk_l_avgSpend">예상 객단가 <span class="hint">원 · 지도 대표메뉴 중간가 기준</span></label>
         <input type="number" id="mkAvgSpend" value="9000" step="100">
       </div>
       <div class="field">
@@ -1359,7 +1359,7 @@
   <h3>⚠️ 추정치 기반 안내 및 면책</h3>
   <ul>
     <li>이 프로그램이 제시하는 <b>유동인구·배후인구·세대수·상권 유형·객단가·평당 임대료·예상 매출·인테리어/설비/인건비·투자금 회수기간</b> 등은 모두 <b>공개 지도 데이터와 일반적인 업계 평균에 근거한 추정값</b>이며, 실제 수치와 다를 수 있습니다.</li>
-    <li>경쟁점 수·주변 업소 수는 <b>카카오맵에 등록된 정보</b> 기준이므로, 미등록·폐업 업소로 인해 실제와 차이가 날 수 있습니다.</li>
+    <li>경쟁점 수·주변 업소 수는 <b>지도에 등록된 정보</b> 기준이므로, 미등록·폐업 업소로 인해 실제와 차이가 날 수 있습니다.</li>
     <li>표준 레시피의 재료·사용량·가격, 메뉴 판매가는 <b>일반적인 참고값</b>입니다. 실제 구매가·상권 시세로 수정해 사용하세요.</li>
     <li>본 프로그램은 <b>의사결정을 돕는 참고 도구</b>일 뿐이며, <b>투자·창업 자문이나 수익 보장이 아닙니다.</b></li>
     <li>계약(임대차·가맹 등) 및 투자 결정 전에는 반드시 <b>현장 조사와 전문가 상담</b>을 병행하시기 바랍니다.</li>
@@ -2092,7 +2092,7 @@ const I18N = {
     s_btn_save:'이 계획 저장하기', s_h_saved:'저장된 창업 자금 계획', s_empty_saved:'저장된 계획이 없습니다.',
     tabMarket:'상권분석', mk_h_basic:'① 기본 상권 정보', mk_l_location:'상권/입지명', mk_ph_location:'예) 강남역 11번 출구 인근', mk_l_radius:'분석 반경', mk_l_type:'상권 유형', mk_type_residential:'주거형', mk_type_office:'오피스형', mk_type_station:'역세권', mk_type_entertainment:'유흥가', mk_type_school:'학원가', mk_type_mixed:'혼합형', mk_typehint_residential:'아파트·주택가 밀집지역. 거주인구 중심이라 저녁·주말 소비가 특징이며, 편의점·반찬가게·미용실 등에 적합해요.', mk_typehint_office:'회사·사무실 밀집지역. 평일 점심·저녁 시간대에 유동인구가 몰리고 주말은 한산해요. 카페·도시락·식당에 유리해요.', mk_typehint_station:'지하철·기차역 인근. 유동인구가 매우 많고 출퇴근 시간대에 집중돼요. 테이크아웃·편의점·프랜차이즈에 유리해요.', mk_typehint_entertainment:'술집·노래방 등이 모인 야간 상권. 저녁~새벽 매출 비중이 크고 임대료도 높은 편이에요.', mk_typehint_school:'학원·학교 밀집지역. 방과후·저녁 시간대 학생 유동인구가 집중돼요. 분식·문구·스터디카페에 적합해요.', mk_typehint_mixed:'여러 유형이 섞인 상권이에요. 시간대별 고객층이 다양해 예측이 더 어려우니 직접 관찰해서 값을 입력하는 게 좋아요.', mk_l_footTraffic:'일 평균 유동인구', mk_h_people:'명', mk_l_population:'배후 인구(반경 내)', mk_l_transit:'대중교통 접근성', mk_l_visibility:'가시성/코너 여부', mk_h_competition:'② 경쟁 강도 분석', mk_l_competitors:'반경 내 동일업종 경쟁점 수', mk_l_competitorPrice:'경쟁점 평균 객단가', mk_l_targetShare:'목표 시장 점유율', mk_k_density:'경쟁 밀도지수', mk_h_lowerBetter:'(낮을수록 유리)', mk_k_perCapita:'경쟁점 1개당 배후인구', mk_h_revenue:'③ 예상 매출 추정', mk_l_conversionRate:'유동인구 → 방문 전환율', mk_l_avgSpend:'예상 객단가', mk_l_visitFreq:'고객 월 평균 재방문 횟수', mk_h_optional2:'선택, 기본 1회', mk_l_operatingDays:'월 영업일수', mk_h_days:'일', mk_l_estMonthlyRevenue:'예상 월매출', mk_k_dailyVisitors:'예상 일 방문객수', mk_k_dailyRevenue:'예상 일매출', mk_h_rent:'④ 임대료 부담 분석', mk_l_area:'매장 면적', mk_l_rentPerPy:'평당 임대료', mk_l_keyMoney:'권리금', mk_h_optional:'선택, 참고용', mk_k_monthlyRent:'월 임대료', mk_k_rentBurden:'임대료 부담률', mk_h_ofRevenue:'매출 대비', mk_note_rent:'일반적으로 임대료 부담률 10% 이하가 안정적인 기준입니다. (직접 입력한 값 기준이며 실제 주변 시세는 별도로 조사해주세요.)', mk_h_score:'⑤ 종합 입지 등급', mk_l_grade:'종합 입지 등급', mk_note_feasibility:'창업 자금계산 탭에서 저장한 계획이 있으면 손익분기 매출과 자동으로 비교됩니다.', mk_btn_save:'이 상권분석 저장하기', mk_h_saved:'저장된 상권분석', mk_empty_saved:'저장된 상권분석이 없습니다.', mk_h_locationHint:'주소를 입력하면 자동 분석에 사용됩니다', mk_l_autoKeyword:'업종 키워드', mk_h_autoKeywordHint:'예: 카페, 편의점, 치킨집 — 경쟁점 자동검색에 사용', mk_btn_autoAnalyze:'🔍 이 주소로 자동 분석하기', mk_auto_status_idle:'위에 상권/입지명(주소)을 입력하고 버튼을 누르면 좌표 확인 → 지도 표시 → (API 키가 있다면) 실시간 경쟁점 검색까지 한 번에 진행됩니다.',
     mk_h_priceHelper:'도우미: 주변 시세 비교 (직접 조사한 매물 입력)', mk_priceHelper_desc:'부동산 사이트나 현장 조사로 확인한 주변 매물을 입력하면 평당 환산 월세를 자동 계산하고, 평균값을 평당 임대료 필드에 적용할 수 있습니다. 실시간 시세를 자동으로 가져오는 기능은 아니며, 직접 조사한 값을 비교·평균 내는 도구입니다.', mk_btn_addPrice:'+ 매물 추가', mk_btn_calcPrice:'평균 계산', mk_btn_applyPrice:'평당 임대료에 적용', mk_h_map:'⑤ 지도로 보기', mk_map_desc:'무료 오픈스트리트맵을 이용합니다. 주소를 입력하고 검색하면 좌표를 찾아 지도에 분석 반경을 표시합니다.', mk_l_address:'주소/장소 검색', mk_ph_address:'예) 서울 강남구 강남대로 396', mk_btn_geocode:'🔍 주소로 좌표 찾기', mk_map_status_idle:'주소를 검색하면 지도가 표시됩니다.', mk_h_combined:'⑦ 통합 리포트', mk_combined_desc:'현재 입력된 레시피 원가계산·창업 자금계산·상권분석 3가지를 한 번에 PDF로 저장합니다.', mk_btn_combinedPdf:'📄 레시피+창업자금+상권분석 통합 PDF 저장',
-    set_h_title:'⚙ 설정 — API 키', set_desc:'여기에 입력한 API 키는 이 브라우저에만 저장되며, 외부 서버가 아닌 카카오 서버로 직접 요청할 때만 사용됩니다.', set_l_kakaoKey:'카카오 REST API 키', set_h_kakaoUse:'실시간 경쟁점 검색(상권분석)에 사용', set_ph_kakaoKey:'카카오 디벨로퍼스에서 발급받은 REST API 키', set_guide_kakao:'발급 방법: developers.kakao.com 접속 → 로그인 → [내 애플리케이션] → 애플리케이션 추가 → 요약 정보에서 "REST API 키" 복사 → [플랫폼] 메뉴에서 이 페이지를 열 웹 사이트 도메인을 등록해야 정상 작동합니다. 완전 무료입니다.', set_btn_save:'저장', set_btn_clear:'키 삭제', set_btn_close:'닫기', mk_l_searchKeyword:'실시간 검색 키워드', mk_h_searchKeywordHint:'예: 카페, 편의점, 치킨집', mk_ph_searchKeyword:'예) 카페', mk_btn_realSearch:'🔍 실시간 경쟁점 검색 (카카오 API)', mk_api_status_nokey:'API 키가 설정되지 않았습니다. 상단 ⚙ 설정에서 키를 입력해주세요.'
+    set_h_title:'⚙ 설정 — API 키', set_desc:'여기에 입력한 API 키는 이 브라우저에만 저장되며, 외부 서버가 아닌 카카오 서버로 직접 요청할 때만 사용됩니다.', set_l_kakaoKey:'카카오 REST API 키', set_h_kakaoUse:'실시간 경쟁점 검색(상권분석)에 사용', set_ph_kakaoKey:'카카오 디벨로퍼스에서 발급받은 REST API 키', set_guide_kakao:'발급 방법: developers.kakao.com 접속 → 로그인 → [내 애플리케이션] → 애플리케이션 추가 → 요약 정보에서 "REST API 키" 복사 → [플랫폼] 메뉴에서 이 페이지를 열 웹 사이트 도메인을 등록해야 정상 작동합니다. 완전 무료입니다.', set_btn_save:'저장', set_btn_clear:'키 삭제', set_btn_close:'닫기', mk_l_searchKeyword:'실시간 검색 키워드', mk_h_searchKeywordHint:'예: 카페, 편의점, 치킨집', mk_ph_searchKeyword:'예) 카페', mk_btn_realSearch:'🔍 실시간 경쟁점 검색', mk_api_status_nokey:'API 키가 설정되지 않았습니다. 상단 ⚙ 설정에서 키를 입력해주세요.'
   },
   en: {
     eyebrow:'CONMA BUSINESS SUITE', mainTitle:'Conma Business Calculator Suite',
@@ -2134,7 +2134,7 @@ const I18N = {
     s_btn_save:'Save This Plan', s_h_saved:'Saved Startup Fund Plans', s_empty_saved:'No plans saved yet.',
     tabMarket:'Trade Area Analysis', mk_h_basic:'① Basic Area Info', mk_l_location:'Location / Site Name', mk_ph_location:'e.g. Near Gangnam Stn. Exit 11', mk_l_radius:'Analysis Radius', mk_l_type:'Area Type', mk_type_residential:'Residential', mk_type_office:'Office District', mk_type_station:'Near Transit Station', mk_type_entertainment:'Nightlife District', mk_type_school:'Academy District', mk_type_mixed:'Mixed', mk_typehint_residential:'Dense apartment/housing area. Driven by residents, so evening and weekend traffic is strongest — good fit for convenience stores, side-dish shops, or hair salons.', mk_typehint_office:'Dense office/business area. Foot traffic peaks at weekday lunch and evening, and is quiet on weekends — good fit for cafes, lunch boxes, or restaurants.', mk_typehint_station:'Near a subway or train station. Very high foot traffic concentrated around commute hours — good fit for takeout, convenience stores, or franchises.', mk_typehint_entertainment:'A nightlife area with bars and karaoke. Most sales happen in the evening through late night, and rents tend to be higher.', mk_typehint_school:'Dense academy/school area. Student foot traffic concentrates after school and in the evening — good fit for snack shops, stationery, or study cafes.', mk_typehint_mixed:'A mix of several area types. The customer base varies more by time of day, so it\'s harder to predict — observe the area directly before entering figures.', mk_l_footTraffic:'Avg. Daily Foot Traffic', mk_h_people:'people', mk_l_population:'Resident Population (within radius)', mk_l_transit:'Transit Accessibility', mk_l_visibility:'Visibility / Corner Location', mk_h_competition:'② Competitive Intensity', mk_l_competitors:'Same-Industry Competitors Nearby', mk_l_competitorPrice:'Competitors\' Avg. Spend per Customer', mk_l_targetShare:'Target Market Share', mk_k_density:'Competitive Density Index', mk_h_lowerBetter:'(lower is better)', mk_k_perCapita:'Population per Competitor', mk_h_revenue:'③ Estimated Revenue', mk_l_conversionRate:'Foot Traffic → Visit Conversion Rate', mk_l_avgSpend:'Expected Spend per Customer', mk_l_visitFreq:'Avg. Monthly Repeat Visits', mk_h_optional2:'optional, default 1', mk_l_operatingDays:'Operating Days per Month', mk_h_days:'days', mk_l_estMonthlyRevenue:'Estimated Monthly Revenue', mk_k_dailyVisitors:'Estimated Daily Visitors', mk_k_dailyRevenue:'Estimated Daily Revenue', mk_h_rent:'④ Rent Burden Analysis', mk_l_area:'Store Size', mk_l_rentPerPy:'Rent per Pyeong', mk_l_keyMoney:'Key Money (Premium)', mk_h_optional:'optional, for reference', mk_k_monthlyRent:'Monthly Rent', mk_k_rentBurden:'Rent Burden Ratio', mk_h_ofRevenue:'of revenue', mk_note_rent:'A rent burden ratio of 10% or lower is generally considered stable. (Based on the figures you entered — please research actual local rents separately.)', mk_h_score:'⑤ Overall Site Grade', mk_l_grade:'Overall Site Grade', mk_note_feasibility:'If you have a saved plan in the Startup Fund tab, it is automatically compared against the break-even revenue.', mk_btn_save:'Save This Analysis', mk_h_saved:'Saved Trade Area Analyses', mk_empty_saved:'No analyses saved yet.', mk_h_locationHint:'Enter an address to use it for auto-analysis', mk_l_autoKeyword:'Business Keyword', mk_h_autoKeywordHint:'e.g. cafe, convenience store, chicken shop — used for auto competitor search', mk_btn_autoAnalyze:'🔍 Auto-Analyze This Address', mk_auto_status_idle:'Enter the location name (address) above and press the button to find coordinates, show the map, and (if an API key is set) run a real-time competitor search — all in one step.',
     mk_h_priceHelper:'Helper: Compare Nearby Rents (Enter Listings You Researched)', mk_priceHelper_desc:'Enter nearby listings you found on real estate sites or in person, and it will convert each to rent-per-pyeong and average them for you. This does not pull live market data automatically — it is a tool for comparing and averaging figures you researched yourself.', mk_btn_addPrice:'+ Add Listing', mk_btn_calcPrice:'Calculate Average', mk_btn_applyPrice:'Apply to Rent per Pyeong', mk_h_map:'⑤ View on Map', mk_map_desc:'Uses free OpenStreetMap. Enter an address and search to find its coordinates and show the analysis radius on the map.', mk_l_address:'Search Address / Place', mk_ph_address:'e.g. 396 Gangnam-daero, Gangnam-gu, Seoul', mk_btn_geocode:'🔍 Find Coordinates from Address', mk_map_status_idle:'Search an address to display the map.', mk_h_combined:'⑦ Combined Report', mk_combined_desc:'Save the current Recipe Costing, Startup Fund, and Trade Area Analysis all together as one PDF.', mk_btn_combinedPdf:'📄 Save Combined PDF (Recipe + Startup Fund + Trade Area)',
-    set_h_title:'⚙ Settings — API Key', set_desc:'The API key you enter here is stored only in this browser and is used only to make requests directly to Kakao\'s servers — never sent anywhere else.', set_l_kakaoKey:'Kakao REST API Key', set_h_kakaoUse:'Used for real-time competitor search (Trade Area Analysis)', set_ph_kakaoKey:'REST API key issued from Kakao Developers', set_guide_kakao:'How to get one: go to developers.kakao.com → sign in → [My Applications] → Add Application → copy the "REST API Key" from the summary → register this page\'s domain under [Platform] for it to work. Completely free.', set_btn_save:'Save', set_btn_clear:'Clear Key', set_btn_close:'Close', mk_l_searchKeyword:'Real-Time Search Keyword', mk_h_searchKeywordHint:'e.g. cafe, convenience store, chicken shop', mk_ph_searchKeyword:'e.g. cafe', mk_btn_realSearch:'🔍 Real-Time Competitor Search (Kakao API)', mk_api_status_nokey:'No API key set. Enter one in ⚙ Settings above.'
+    set_h_title:'⚙ Settings — API Key', set_desc:'The API key you enter here is stored only in this browser and is used only to make requests directly to Kakao\'s servers — never sent anywhere else.', set_l_kakaoKey:'Kakao REST API Key', set_h_kakaoUse:'Used for real-time competitor search (Trade Area Analysis)', set_ph_kakaoKey:'REST API key issued from Kakao Developers', set_guide_kakao:'How to get one: go to developers.kakao.com → sign in → [My Applications] → Add Application → copy the "REST API Key" from the summary → register this page\'s domain under [Platform] for it to work. Completely free.', set_btn_save:'Save', set_btn_clear:'Clear Key', set_btn_close:'Close', mk_l_searchKeyword:'Real-Time Search Keyword', mk_h_searchKeywordHint:'e.g. cafe, convenience store, chicken shop', mk_ph_searchKeyword:'e.g. cafe', mk_btn_realSearch:'🔍 Real-Time Competitor Search', mk_api_status_nokey:'No API key set. Enter one in ⚙ Settings above.'
   },
   zh: {
     eyebrow:'CONMA 商业工具套件', mainTitle:'Conma 商业计算器套件',
@@ -2176,7 +2176,7 @@ const I18N = {
     s_btn_save:'保存该计划', s_h_saved:'已保存创业资金计划', s_empty_saved:'暂无已保存计划。',
     tabMarket:'商圈分析', mk_h_basic:'① 基本商圈信息', mk_l_location:'商圈/店址名称', mk_ph_location:'例：江南站11号出口附近', mk_l_radius:'分析半径', mk_l_type:'商圈类型', mk_type_residential:'居住型', mk_type_office:'办公型', mk_type_station:'地铁商圈', mk_type_entertainment:'娱乐商圈', mk_type_school:'补习班商圈', mk_type_mixed:'混合型', mk_typehint_residential:'マンション・住宅密集地域。居住者中心のため夕方・週末の消費が特徴で、コンビニ・惣菜店・美容室などに向いています。', mk_typehint_office:'会社・オフィス密集地域。平日の昼食・夕方の時間帯に通行量が集中し、週末は閑散とします。カフェ・弁当・飲食店に向いています。', mk_typehint_station:'地下鉄・鉄道駅の近く。通行量が非常に多く、通勤時間帯に集中します。テイクアウト・コンビニ・フランチャイズに向いています。', mk_typehint_entertainment:'居酒屋・カラオケなどが集まる夜間商圏。夕方から深夜にかけての売上比率が大きく、家賃も高めです。', mk_typehint_school:'学院・学校密集地域。放課後・夕方の時間帯に学生の通行が集中します。軽食・文具・スタディカフェに向いています。', mk_typehint_mixed:'複数のタイプが混在する商圏です。時間帯によって客層が大きく変わるため予測が難しく、直接観察してから数値を入力することをおすすめします。', mk_typehint_residential:'公寓/住宅密集区。以居民为主，晚间和周末消费明显，适合便利店、小菜店、美发店等。', mk_typehint_office:'公司/办公室密集区。工作日午餐、晚间人流集中，周末冷清，适合咖啡厅、便当、餐厅等。', mk_typehint_station:'地铁/火车站附近。人流量非常大，集中在上下班高峰期，适合外带、便利店、连锁品牌等。', mk_typehint_entertainment:'酒吧、KTV等聚集的夜间商圈。晚间到凌晨的销售占比较大，租金也相对较高。', mk_typehint_school:'补习班/学校密集区。放学后和晚间学生人流集中，适合小吃、文具、自习室咖啡厅等。', mk_typehint_mixed:'多种类型混合的商圈。不同时段客群差异较大，预测难度更高，建议实地观察后再输入数值。', mk_l_footTraffic:'日均人流量', mk_h_people:'人', mk_l_population:'半径内常住人口', mk_l_transit:'公共交通便利度', mk_l_visibility:'可见性/是否临街拐角', mk_h_competition:'② 竞争强度分析', mk_l_competitors:'半径内同行业竞争店数', mk_l_competitorPrice:'竞争店平均客单价', mk_l_targetShare:'目标市场占有率', mk_k_density:'竞争密度指数', mk_h_lowerBetter:'(越低越有利)', mk_k_perCapita:'每个竞争店对应人口', mk_h_revenue:'③ 预计营业额估算', mk_l_conversionRate:'人流→到店转化率', mk_l_avgSpend:'预计客单价', mk_l_visitFreq:'顾客月均复购次数', mk_h_optional2:'可选，默认1次', mk_l_operatingDays:'月营业天数', mk_h_days:'天', mk_l_estMonthlyRevenue:'预计月营业额', mk_k_dailyVisitors:'预计日到店人数', mk_k_dailyRevenue:'预计日营业额', mk_h_rent:'④ 租金负担分析', mk_l_area:'店铺面积', mk_l_rentPerPy:'每坪租金', mk_l_keyMoney:'权利金', mk_h_optional:'可选，仅供参考', mk_k_monthlyRent:'月租金', mk_k_rentBurden:'租金负担率', mk_h_ofRevenue:'占营业额比例', mk_note_rent:'租金负担率一般以10%以下为稳定标准。（基于您输入的数值，实际周边行情请另行调查。）', mk_h_score:'⑤ 综合选址评级', mk_l_grade:'综合选址评级', mk_note_feasibility:'如果在创业资金计算标签中已保存计划，将自动与盈亏平衡营业额进行比较。', mk_btn_save:'保存此商圈分析', mk_h_saved:'已保存商圈分析', mk_empty_saved:'暂无已保存的商圈分析。', mk_h_locationHint:'输入地址后将用于自动分析', mk_l_autoKeyword:'行业关键词', mk_h_autoKeywordHint:'例如：咖啡厅、便利店、炸鸡店 — 用于自动搜索竞争店', mk_btn_autoAnalyze:'🔍 用此地址自动分析', mk_auto_status_idle:'在上方输入商圈/店址名称（地址）后点击按钮，将依次完成坐标确认→地图显示→（如已设置API密钥）实时竞争店搜索。',
     mk_h_priceHelper:'辅助工具：周边行情比较（输入您自行调查的房源）', mk_priceHelper_desc:'输入您在房产网站或实地调查中确认的周边房源信息，系统会自动换算每坪月租并计算平均值，可应用到每坪租金字段。此功能并非自动获取实时行情，而是帮助您比较和平均自行调查数据的工具。', mk_btn_addPrice:'+ 添加房源', mk_btn_calcPrice:'计算平均值', mk_btn_applyPrice:'应用到每坪租金', mk_h_map:'⑤ 地图查看', mk_map_desc:'使用免费的OpenStreetMap。输入地址并搜索后，将查找坐标并在地图上显示分析半径。', mk_l_address:'搜索地址/地点', mk_ph_address:'例：首尔江南区江南大路396', mk_btn_geocode:'🔍 根据地址查找坐标', mk_map_status_idle:'搜索地址后将显示地图。', mk_h_combined:'⑦ 综合报告', mk_combined_desc:'将当前的菜谱成本计算、创业资金计算、商圈分析三项内容一次性保存为PDF。', mk_btn_combinedPdf:'📄 保存综合PDF（菜谱+创业资金+商圈分析）',
-    set_h_title:'⚙ 设置 — API密钥', set_desc:'您在此输入的API密钥仅保存在此浏览器中，仅用于直接向Kakao服务器发送请求，不会发送到其他任何地方。', set_l_kakaoKey:'Kakao REST API密钥', set_h_kakaoUse:'用于实时竞争店搜索（商圈分析）', set_ph_kakaoKey:'从Kakao Developers获取的REST API密钥', set_guide_kakao:'获取方法：访问developers.kakao.com → 登录 → [我的应用] → 添加应用 → 在摘要信息中复制"REST API密钥" → 需在[平台]菜单中注册打开此页面的网站域名才能正常使用。完全免费。', set_btn_save:'保存', set_btn_clear:'删除密钥', set_btn_close:'关闭', mk_l_searchKeyword:'实时搜索关键词', mk_h_searchKeywordHint:'例如：咖啡厅、便利店、炸鸡店', mk_ph_searchKeyword:'例：咖啡厅', mk_btn_realSearch:'🔍 实时竞争店搜索（Kakao API）', mk_api_status_nokey:'尚未设置API密钥。请在上方⚙设置中输入密钥。'
+    set_h_title:'⚙ 设置 — API密钥', set_desc:'您在此输入的API密钥仅保存在此浏览器中，仅用于直接向Kakao服务器发送请求，不会发送到其他任何地方。', set_l_kakaoKey:'Kakao REST API密钥', set_h_kakaoUse:'用于实时竞争店搜索（商圈分析）', set_ph_kakaoKey:'从Kakao Developers获取的REST API密钥', set_guide_kakao:'获取方法：访问developers.kakao.com → 登录 → [我的应用] → 添加应用 → 在摘要信息中复制"REST API密钥" → 需在[平台]菜单中注册打开此页面的网站域名才能正常使用。完全免费。', set_btn_save:'保存', set_btn_clear:'删除密钥', set_btn_close:'关闭', mk_l_searchKeyword:'实时搜索关键词', mk_h_searchKeywordHint:'例如：咖啡厅、便利店、炸鸡店', mk_ph_searchKeyword:'例：咖啡厅', mk_btn_realSearch:'🔍 实时竞争店搜索', mk_api_status_nokey:'尚未设置API密钥。请在上方⚙设置中输入密钥。'
   },
   vi: {
     eyebrow:'BỘ CÔNG CỤ CONMA', mainTitle:'Bộ Máy Tính Kinh Doanh Conma',
@@ -2218,7 +2218,7 @@ const I18N = {
     s_btn_save:'Lưu Kế Hoạch Này', s_h_saved:'Kế Hoạch Vốn Khởi Nghiệp Đã Lưu', s_empty_saved:'Chưa có kế hoạch nào được lưu.',
     tabMarket:'Phân Tích Khu Vực', mk_h_basic:'① Thông Tin Cơ Bản Khu Vực', mk_l_location:'Tên Vị Trí/Địa Điểm', mk_ph_location:'VD: Gần Cổng 11 Ga Gangnam', mk_l_radius:'Bán Kính Phân Tích', mk_l_type:'Loại Khu Vực', mk_type_residential:'Khu Dân Cư', mk_type_office:'Khu Văn Phòng', mk_type_station:'Gần Ga Tàu', mk_type_entertainment:'Khu Giải Trí', mk_type_school:'Khu Học Đường', mk_type_mixed:'Hỗn Hợp', mk_typehint_residential:'Khu vực đông đúc chung cư/nhà ở. Chủ yếu là cư dân nên lượng khách buổi tối và cuối tuần mạnh nhất — phù hợp với cửa hàng tiện lợi, tiệm đồ ăn kèm, tiệm tóc.', mk_typehint_office:'Khu vực đông đúc văn phòng/công ty. Lượng người qua lại cao vào giờ ăn trưa và buổi tối ngày thường, vắng vào cuối tuần — phù hợp với quán cà phê, cơm hộp, nhà hàng.', mk_typehint_station:'Gần ga tàu điện ngầm/tàu hỏa. Lượng người qua lại rất cao, tập trung vào giờ cao điểm đi làm — phù hợp với đồ mang đi, cửa hàng tiện lợi, nhượng quyền.', mk_typehint_entertainment:'Khu giải trí về đêm với quán bar, karaoke. Phần lớn doanh thu vào buổi tối đến khuya, giá thuê thường cao hơn.', mk_typehint_school:'Khu vực đông đúc trung tâm luyện thi/trường học. Học sinh tập trung sau giờ học và buổi tối — phù hợp với quán ăn vặt, văn phòng phẩm, quán cà phê học tập.', mk_typehint_mixed:'Sự pha trộn của nhiều loại khu vực. Đối tượng khách hàng thay đổi nhiều theo thời gian trong ngày nên khó dự đoán hơn — hãy quan sát trực tiếp trước khi nhập số liệu.', mk_l_footTraffic:'Lượng Người Qua Lại TB/Ngày', mk_h_people:'người', mk_l_population:'Dân Số Xung Quanh (trong bán kính)', mk_l_transit:'Khả Năng Tiếp Cận Giao Thông', mk_l_visibility:'Độ Dễ Nhìn Thấy/Vị Trí Góc', mk_h_competition:'② Phân Tích Mức Độ Cạnh Tranh', mk_l_competitors:'Số Đối Thủ Cùng Ngành Trong Bán Kính', mk_l_competitorPrice:'Giá TB Mỗi Khách Của Đối Thủ', mk_l_targetShare:'Thị Phần Mục Tiêu', mk_k_density:'Chỉ Số Mật Độ Cạnh Tranh', mk_h_lowerBetter:'(càng thấp càng tốt)', mk_k_perCapita:'Dân Số Trên Mỗi Đối Thủ', mk_h_revenue:'③ Ước Tính Doanh Thu', mk_l_conversionRate:'Tỷ Lệ Chuyển Đổi Người Qua Lại → Ghé Thăm', mk_l_avgSpend:'Chi Tiêu Dự Kiến Mỗi Khách', mk_l_visitFreq:'Số Lần Quay Lại TB/Tháng', mk_h_optional2:'tùy chọn, mặc định 1', mk_l_operatingDays:'Số Ngày Hoạt Động/Tháng', mk_h_days:'ngày', mk_l_estMonthlyRevenue:'Doanh Thu Dự Kiến/Tháng', mk_k_dailyVisitors:'Số Khách Dự Kiến/Ngày', mk_k_dailyRevenue:'Doanh Thu Dự Kiến/Ngày', mk_h_rent:'④ Phân Tích Gánh Nặng Tiền Thuê', mk_l_area:'Diện Tích Cửa Hàng', mk_l_rentPerPy:'Tiền Thuê Mỗi Pyeong', mk_l_keyMoney:'Tiền Quyền (Key Money)', mk_h_optional:'tùy chọn, để tham khảo', mk_k_monthlyRent:'Tiền Thuê Hàng Tháng', mk_k_rentBurden:'Tỷ Lệ Gánh Nặng Tiền Thuê', mk_h_ofRevenue:'trên doanh thu', mk_note_rent:'Tỷ lệ gánh nặng tiền thuê từ 10% trở xuống thường được xem là ổn định. (Dựa trên số liệu bạn nhập — vui lòng tự khảo sát giá thuê thực tế khu vực.)', mk_h_score:'⑤ Xếp Hạng Vị Trí Tổng Thể', mk_l_grade:'Xếp Hạng Vị Trí Tổng Thể', mk_note_feasibility:'Nếu bạn có kế hoạch đã lưu trong tab Vốn Khởi Nghiệp, hệ thống sẽ tự động so sánh với doanh thu hòa vốn.', mk_btn_save:'Lưu Phân Tích Này', mk_h_saved:'Phân Tích Khu Vực Đã Lưu', mk_empty_saved:'Chưa có phân tích nào được lưu.', mk_h_locationHint:'Nhập địa chỉ để sử dụng cho phân tích tự động', mk_l_autoKeyword:'Từ Khóa Ngành Nghề', mk_h_autoKeywordHint:'VD: quán cà phê, cửa hàng tiện lợi, quán gà rán — dùng để tự động tìm đối thủ', mk_btn_autoAnalyze:'🔍 Tự Động Phân Tích Địa Chỉ Này', mk_auto_status_idle:'Nhập tên vị trí (địa chỉ) ở trên rồi nhấn nút để tự động: xác định tọa độ → hiển thị bản đồ → (nếu có khóa API) tìm đối thủ cạnh tranh theo thời gian thực, tất cả trong một bước.',
     mk_h_priceHelper:'Công Cụ: So Sánh Giá Thuê Xung Quanh (Nhập Địa Điểm Bạn Đã Khảo Sát)', mk_priceHelper_desc:'Nhập các địa điểm cho thuê xung quanh mà bạn đã tìm thấy trên trang bất động sản hoặc khảo sát thực tế, hệ thống sẽ tự động quy đổi giá thuê theo pyeong và tính trung bình. Đây không phải tính năng tự động lấy dữ liệu thị trường theo thời gian thực — mà là công cụ so sánh và tính trung bình các số liệu bạn tự khảo sát.', mk_btn_addPrice:'+ Thêm Địa Điểm', mk_btn_calcPrice:'Tính Trung Bình', mk_btn_applyPrice:'Áp Dụng Vào Giá Thuê/Pyeong', mk_h_map:'⑤ Xem Trên Bản Đồ', mk_map_desc:'Sử dụng OpenStreetMap miễn phí. Nhập địa chỉ và tìm kiếm để lấy tọa độ và hiển thị bán kính phân tích trên bản đồ.', mk_l_address:'Tìm Địa Chỉ/Địa Điểm', mk_ph_address:'VD: 396 Gangnam-daero, Gangnam-gu, Seoul', mk_btn_geocode:'🔍 Tìm Tọa Độ Từ Địa Chỉ', mk_map_status_idle:'Tìm kiếm địa chỉ để hiển thị bản đồ.', mk_h_combined:'⑦ Báo Cáo Tổng Hợp', mk_combined_desc:'Lưu cùng lúc Tính Giá Thành Công Thức, Vốn Khởi Nghiệp và Phân Tích Khu Vực hiện tại thành một file PDF.', mk_btn_combinedPdf:'📄 Lưu PDF Tổng Hợp (Công Thức + Vốn Khởi Nghiệp + Khu Vực)',
-    set_h_title:'⚙ Cài Đặt — Khóa API', set_desc:'Khóa API bạn nhập ở đây chỉ được lưu trong trình duyệt này và chỉ dùng để gửi yêu cầu trực tiếp đến máy chủ Kakao — không gửi đi nơi nào khác.', set_l_kakaoKey:'Khóa REST API Kakao', set_h_kakaoUse:'Dùng để tìm kiếm đối thủ cạnh tranh theo thời gian thực (Phân Tích Khu Vực)', set_ph_kakaoKey:'Khóa REST API cấp từ Kakao Developers', set_guide_kakao:'Cách lấy: vào developers.kakao.com → đăng nhập → [Ứng Dụng Của Tôi] → Thêm Ứng Dụng → sao chép "Khóa REST API" từ thông tin tóm tắt → đăng ký tên miền của trang này trong mục [Platform] để hoạt động. Hoàn toàn miễn phí.', set_btn_save:'Lưu', set_btn_clear:'Xóa Khóa', set_btn_close:'Đóng', mk_l_searchKeyword:'Từ Khóa Tìm Kiếm Thời Gian Thực', mk_h_searchKeywordHint:'VD: quán cà phê, cửa hàng tiện lợi, quán gà rán', mk_ph_searchKeyword:'VD: quán cà phê', mk_btn_realSearch:'🔍 Tìm Đối Thủ Thời Gian Thực (Kakao API)', mk_api_status_nokey:'Chưa thiết lập khóa API. Nhập khóa trong ⚙ Cài Đặt ở trên.'
+    set_h_title:'⚙ Cài Đặt — Khóa API', set_desc:'Khóa API bạn nhập ở đây chỉ được lưu trong trình duyệt này và chỉ dùng để gửi yêu cầu trực tiếp đến máy chủ Kakao — không gửi đi nơi nào khác.', set_l_kakaoKey:'Khóa REST API Kakao', set_h_kakaoUse:'Dùng để tìm kiếm đối thủ cạnh tranh theo thời gian thực (Phân Tích Khu Vực)', set_ph_kakaoKey:'Khóa REST API cấp từ Kakao Developers', set_guide_kakao:'Cách lấy: vào developers.kakao.com → đăng nhập → [Ứng Dụng Của Tôi] → Thêm Ứng Dụng → sao chép "Khóa REST API" từ thông tin tóm tắt → đăng ký tên miền của trang này trong mục [Platform] để hoạt động. Hoàn toàn miễn phí.', set_btn_save:'Lưu', set_btn_clear:'Xóa Khóa', set_btn_close:'Đóng', mk_l_searchKeyword:'Từ Khóa Tìm Kiếm Thời Gian Thực', mk_h_searchKeywordHint:'VD: quán cà phê, cửa hàng tiện lợi, quán gà rán', mk_ph_searchKeyword:'VD: quán cà phê', mk_btn_realSearch:'🔍 Tìm Đối Thủ Thời Gian Thực', mk_api_status_nokey:'Chưa thiết lập khóa API. Nhập khóa trong ⚙ Cài Đặt ở trên.'
   },
   ja: {
     eyebrow:'CONMA ビジネススイート', mainTitle:'Conma ビジネス計算スイート',
@@ -2260,7 +2260,7 @@ const I18N = {
     s_btn_save:'この計画を保存', s_h_saved:'保存済み創業資金計画', s_empty_saved:'保存された計画がありません。',
     tabMarket:'商圏分析', mk_h_basic:'① 基本商圏情報', mk_l_location:'商圏/立地名', mk_ph_location:'例）江南駅11番出口付近', mk_l_radius:'分析半径', mk_l_type:'商圏タイプ', mk_type_residential:'住宅型', mk_type_office:'オフィス型', mk_type_station:'駅前商圏', mk_type_entertainment:'繁華街', mk_type_school:'学院街', mk_type_mixed:'混合型', mk_l_footTraffic:'1日平均通行量', mk_h_people:'人', mk_l_population:'背後人口(半径内)', mk_l_transit:'公共交通の利便性', mk_l_visibility:'視認性/角地かどうか', mk_h_competition:'② 競争強度分析', mk_l_competitors:'半径内同業競合店数', mk_l_competitorPrice:'競合店平均客単価', mk_l_targetShare:'目標市場シェア', mk_k_density:'競争密度指数', mk_h_lowerBetter:'(低いほど有利)', mk_k_perCapita:'競合店1店あたり背後人口', mk_h_revenue:'③ 予想売上推定', mk_l_conversionRate:'通行量→来店転換率', mk_l_avgSpend:'予想客単価', mk_l_visitFreq:'顧客月平均再来店回数', mk_h_optional2:'任意、デフォルト1回', mk_l_operatingDays:'月間営業日数', mk_h_days:'日', mk_l_estMonthlyRevenue:'予想月商', mk_k_dailyVisitors:'予想1日来店客数', mk_k_dailyRevenue:'予想日商', mk_h_rent:'④ 家賃負担分析', mk_l_area:'店舗面積', mk_l_rentPerPy:'坪当たり家賃', mk_l_keyMoney:'権利金', mk_h_optional:'任意、参考用', mk_k_monthlyRent:'月額家賃', mk_k_rentBurden:'家賃負担率', mk_h_ofRevenue:'売上比', mk_note_rent:'一般的に家賃負担率10%以下が安定した基準とされています。（入力値に基づくもので、実際の周辺相場は別途調査してください。）', mk_h_score:'⑤ 総合立地評価', mk_l_grade:'総合立地評価', mk_note_feasibility:'創業資金計算タブに保存した計画があれば、損益分岐売上と自動で比較されます。', mk_btn_save:'この商圏分析を保存', mk_h_saved:'保存済み商圏分析', mk_empty_saved:'保存された商圏分析がありません。', mk_h_locationHint:'住所を入力すると自動分析に使用されます', mk_l_autoKeyword:'業種キーワード', mk_h_autoKeywordHint:'例：カフェ、コンビニ、チキン店 — 競合店自動検索に使用', mk_btn_autoAnalyze:'🔍 この住所で自動分析する', mk_auto_status_idle:'上の商圏/立地名（住所）を入力してボタンを押すと、座標確認→地図表示→（APIキーがあれば）リアルタイム競合店検索まで一度に進みます。',
     mk_h_priceHelper:'ヘルパー：周辺相場比較（自分で調べた物件情報を入力）', mk_priceHelper_desc:'不動産サイトや現地調査で確認した周辺物件情報を入力すると、坪当たり家賃に自動換算し、平均値を坪当たり家賃欄に適用できます。リアルタイム相場を自動取得する機能ではなく、自分で調べた数値を比較・平均するためのツールです。', mk_btn_addPrice:'+ 物件を追加', mk_btn_calcPrice:'平均を計算', mk_btn_applyPrice:'坪当たり家賃に適用', mk_h_map:'⑤ 地図で見る', mk_map_desc:'無料のOpenStreetMapを使用します。住所を入力して検索すると座標を見つけ、地図上に分析半径を表示します。', mk_l_address:'住所/場所を検索', mk_ph_address:'例）ソウル江南区江南大路396', mk_btn_geocode:'🔍 住所から座標を検索', mk_map_status_idle:'住所を検索すると地図が表示されます。', mk_h_combined:'⑦ 統合レポート', mk_combined_desc:'現在入力されているレシピ原価計算・創業資金計算・商圏分析の3つを一度にPDFとして保存します。', mk_btn_combinedPdf:'📄 レシピ+創業資金+商圏分析 統合PDF保存',
-    set_h_title:'⚙ 設定 — APIキー', set_desc:'ここに入力したAPIキーはこのブラウザにのみ保存され、外部サーバーではなくKakaoサーバーへ直接リクエストする際にのみ使用されます。', set_l_kakaoKey:'Kakao REST APIキー', set_h_kakaoUse:'リアルタイム競合店検索（商圏分析）に使用', set_ph_kakaoKey:'Kakao Developersで発行されたREST APIキー', set_guide_kakao:'取得方法：developers.kakao.comにアクセス→ログイン→[マイアプリケーション]→アプリケーション追加→概要情報から「REST APIキー」をコピー→[プラットフォーム]メニューでこのページを開くWebサイトドメインを登録すると正常に動作します。完全無料です。', set_btn_save:'保存', set_btn_clear:'キー削除', set_btn_close:'閉じる', mk_l_searchKeyword:'リアルタイム検索キーワード', mk_h_searchKeywordHint:'例：カフェ、コンビニ、チキン店', mk_ph_searchKeyword:'例）カフェ', mk_btn_realSearch:'🔍 リアルタイム競合店検索（Kakao API）', mk_api_status_nokey:'APIキーが設定されていません。上部の⚙設定でキーを入力してください。'
+    set_h_title:'⚙ 設定 — APIキー', set_desc:'ここに入力したAPIキーはこのブラウザにのみ保存され、外部サーバーではなくKakaoサーバーへ直接リクエストする際にのみ使用されます。', set_l_kakaoKey:'Kakao REST APIキー', set_h_kakaoUse:'リアルタイム競合店検索（商圏分析）に使用', set_ph_kakaoKey:'Kakao Developersで発行されたREST APIキー', set_guide_kakao:'取得方法：developers.kakao.comにアクセス→ログイン→[マイアプリケーション]→アプリケーション追加→概要情報から「REST APIキー」をコピー→[プラットフォーム]メニューでこのページを開くWebサイトドメインを登録すると正常に動作します。完全無料です。', set_btn_save:'保存', set_btn_clear:'キー削除', set_btn_close:'閉じる', mk_l_searchKeyword:'リアルタイム検索キーワード', mk_h_searchKeywordHint:'例：カフェ、コンビニ、チキン店', mk_ph_searchKeyword:'例）カフェ', mk_btn_realSearch:'🔍 リアルタイム競合店検索', mk_api_status_nokey:'APIキーが設定されていません。上部の⚙設定でキーを入力してください。'
   }
 };
 
@@ -3162,7 +3162,7 @@ function updateApiKeyStatus(){
     statusEl.textContent = dict.mk_api_status_nokey;
   } else if(statusEl.dataset.locked !== 'true'){
     // 검색 결과가 표시 중이 아닐 때만 기본 안내로 되돌림
-    statusEl.textContent = '카카오 API 키가 설정되어 있습니다. "실시간 경쟁점 검색" 버튼을 눌러보세요.';
+    statusEl.textContent = '실시간 데이터가 연결되어 있습니다. "실시간 경쟁점 검색" 버튼을 눌러보세요.';
   }
 }
 const MENU_PROXY_STORAGE = 'conmaMenuProxyUrl_v1';
@@ -3185,7 +3185,7 @@ $('btnClearApiKey').addEventListener('click', ()=>{
   updateApiKeyStatus();
 });
 
-// ---------- 실시간 경쟁점 검색 (카카오 로컬 API, 무료) ----------
+// ---------- 실시간 경쟁점 검색 ----------
 // 키워드 장소 검색 (좌표·반경 지정). radius 없으면 전국(질의어 기준).
 async function kakaoKeywordSearch(keyword, lng, lat, radius, key){
   let url = `${kakaoBase()}/v2/local/search/keyword.json?query=${encodeURIComponent(keyword)}&size=15&sort=distance`;
@@ -3209,7 +3209,7 @@ async function kakaoRegion(lat, lng, key){
 async function fetchRealCompetitors(){
   const key = loadApiKey();
   const statusEl = $('mkApiStatus');
-  if(!hasKakao()){ alert('먼저 상단 ⚙ 설정에서 카카오 API 키를 입력해주세요.'); return; }
+  if(!hasKakao()){ alert('먼저 상단 ⚙ 설정에서 실시간 데이터가 연결해주세요.'); return; }
   if(mkLastLat===null || mkLastLng===null){ alert('먼저 ⑤ 지도로 보기에서 주소를 검색해 좌표를 찾아주세요.'); return; }
   const keyword = $('mkSearchKeyword').value.trim();
   if(!keyword){ alert('검색할 키워드(예: 카페, 편의점)를 입력해주세요.'); $('mkSearchKeyword').focus(); return; }
@@ -3229,7 +3229,7 @@ async function fetchRealCompetitors(){
     if(found){
       $('mkCompetitors').value = found.count;
       const expandNote = usedRadius!==setRadius ? ` (설정 ${setRadius}m엔 0건 → ${usedRadius}m로 자동 확장)` : '';
-      statusEl.textContent = `실시간 검색: "${keyword}" 반경 ${usedRadius}m 내 ${found.count}건 발견${expandNote} (카카오맵 기준)`;
+      statusEl.textContent = `실시간 검색: "${keyword}" 반경 ${usedRadius}m 내 ${found.count}건 발견${expandNote} `;
       renderCompetitorList(found.docs, keyword, found.count, `반경 ${usedRadius}m`);
       renderMarket();
       maybeAutoCollectMenus();
@@ -3251,11 +3251,11 @@ async function fetchRealCompetitors(){
     }
     renderMarket();
   }catch(e){
-    console.error('카카오 API 검색 실패', e);
+    console.error('실시간 데이터 검색 실패', e);
     statusEl.textContent = '실시간 검색에 실패했습니다. API 키가 올바른지, 카카오 디벨로퍼스 [플랫폼]에 이 사이트 도메인이 등록되어 있는지 확인해주세요. (오류: ' + e.message + ')';
   }
 }
-// 경쟁점 검색 결과 목록 렌더 — 각 가게의 카카오맵 상세페이지(메뉴·가격·사진) 링크 제공
+// 경쟁점 검색 결과 목록 렌더 — 각 가게의 지도 상세페이지(메뉴·가격·사진) 링크 제공
 function escHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderCompetitorList(docs, keyword, totalCount, scopeLabel, isCityRef){
   const wrap = $('mkCompetitorList');
@@ -3330,7 +3330,7 @@ $('btnMenuMedian').addEventListener('click', ()=>{
   $('mkCompetitorPrice').value = median;
   $('mkAvgSpend').value = median;
   renderMarket();
-  resEl.innerHTML = `✅ 입력 <b>${prices.length}개</b> (${sorted[0].toLocaleString('ko-KR')}~${sorted[sorted.length-1].toLocaleString('ko-KR')}원) 중 <b>중간값 ${median.toLocaleString('ko-KR')}원</b>을 「경쟁점 평균 객단가」와 「예상 객단가」에 적용했습니다. <span style="color:var(--muted)">(카카오맵 대표메뉴 기준)</span>`;
+  resEl.innerHTML = `✅ 입력 <b>${prices.length}개</b> (${sorted[0].toLocaleString('ko-KR')}~${sorted[sorted.length-1].toLocaleString('ko-KR')}원) 중 <b>중간값 ${median.toLocaleString('ko-KR')}원</b>을 「경쟁점 평균 객단가」와 「예상 객단가」에 적용했습니다. <span style="color:var(--muted)">(대표메뉴 기준)</span>`;
 });
 
 // ---------- 업종 성격 → 객단가·전환율·방문빈도 자동 세팅 ----------
@@ -3444,7 +3444,7 @@ $('btnAutoAnalyze').addEventListener('click', async ()=>{
   const key = loadApiKey();
   const keyword = $('mkSearchKeyword').value.trim();
   if(!hasKakao()){
-    statusEl.textContent += ' · ③ 상권 유형 자동 감지·경쟁점 검색은 건너뜀 (⚙ 설정에서 카카오 API 키를 입력하면 자동으로 진행됩니다)';
+    statusEl.textContent += ' · ③ 상권 유형 자동 감지·경쟁점 검색은 건너뜀 (⚙ 설정에서 실시간 데이터가 연결하면 자동으로 진행됩니다)';
     return;
   }
 
@@ -3970,7 +3970,7 @@ function rescalePopulationByRadius(){
 $('mkType').addEventListener('change', ()=>{ updateMkTypeHint(); applyMarketTypePreset(); });
 $('mkRadius').addEventListener('change', ()=>{ rescalePopulationByRadius(); renderMarket(); });
 
-// ---------- 상권 유형 자동 감지 (카카오 카테고리 검색) ----------
+// ---------- 상권 유형 자동 감지  ----------
 // 지정 좌표 반경 내 특정 업종군의 개수(total_count)를 반환
 async function kakaoCategoryCount(code, lat, lng, radius, key){
   try{
@@ -4031,7 +4031,7 @@ async function detectMarketType(lat, lng, radius, key){
   const est = estimateDemographicsFromPOI(detail, radius, rad);
   return { type, reason, detail, est, surveyRadius: rad };
 }
-// 실측 POI 밀도(카카오) → 유동인구·배후인구·교통 추정 (인원 환산은 밀도 비례 추정식)
+// 실측 POI 밀도 → 유동인구·배후인구·교통 추정 (인원 환산은 밀도 비례 추정식)
 function estimateDemographicsFromPOI(d, userRadius, surveyRadius){
   const commercial = (d.food||0) + (d.cafe||0);
   // 유동인구(일): 상업·관광·숙박·교통 밀도 기반
@@ -4063,7 +4063,7 @@ function renderTypeBasis(d){
   ].filter(p=>p[1]>0).map(p=>`<span class="chip">${p[0]} <b>${p[1]}</b></span>`).join('');
   const hh = d.est.households ? `배후 세대수 <b>약 ${Number(d.est.households).toLocaleString('ko-KR')}세대</b> · ` : '';
   el.innerHTML = `<div class="basis-box">
-    <div class="b-title">📍 이 위치 실측 근거 <small>(카카오맵 · 반경 ${d.surveyRadius}m 내 등록 업소 수)</small></div>
+    <div class="b-title">📍 이 위치 실측 근거 <small>(반경 ${d.surveyRadius}m 내 등록 업소 수)</small></div>
     <div class="basis-chips">${chips || '<span class="chip">주변 등록 업소가 적음</span>'}</div>
     <div class="b-out">위 <b>실제 업소 수</b>로 추정 → 일 유동인구 <b>약 ${Number(d.est.foot).toLocaleString('ko-KR')}명</b> · 배후인구 <b>약 ${Number(d.est.pop).toLocaleString('ko-KR')}명</b> · ${hh}교통 <b>${d.est.transit}/5</b><br>※ 업소·아파트 수는 실제 카카오 데이터입니다. 인원·세대수 환산은 밀도 비례 추정식(가구원 2.3명 기준)이라 정확한 값은 아니며 참고용입니다.</div>
   </div>`;
@@ -4876,7 +4876,7 @@ async function downloadHtmlAsPdf(innerHtml, filename){
 const PDF_DISCLAIMER = `<div style="margin-top:18px;padding-top:10px;border-top:1px solid #ccc;font-size:10.5px;color:#777;line-height:1.6;">
   <b style="color:#B4432D;">※ 추정치 기반 안내 및 면책</b><br>
   유동인구·배후인구·세대수·상권 유형·객단가·평당 임대료·예상 매출·인테리어/설비/인건비·회수기간 등은 공개 지도 데이터와 업계 평균에 근거한 <b>추정값</b>이며 실제와 다를 수 있습니다.
-  경쟁점 수는 카카오맵 등록 정보 기준입니다. 본 자료는 <b>참고용 도구</b>이며 투자·창업 자문이나 수익 보장이 아닙니다.
+  경쟁점 수는 지도 등록 정보 기준입니다. 본 자료는 <b>참고용 도구</b>이며 투자·창업 자문이나 수익 보장이 아닙니다.
   계약·투자 전 반드시 현장 조사와 전문가 상담을 병행하시기 바라며, 본 자료를 근거로 한 손실에 대해 제작자·판매자는 법적 책임을 지지 않습니다.
 </div>`;
 const PDF_STYLE = `<style>
